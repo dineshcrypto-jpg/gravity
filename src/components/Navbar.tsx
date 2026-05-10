@@ -33,8 +33,7 @@ export default function Navbar() {
       const { data } = await supabase
         .from('categories')
         .select('*')
-        .order('name')
-        .limit(6);
+        .order('name');
       if (data) setCategories(data);
     }
     fetchCategories();
