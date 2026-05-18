@@ -27,4 +27,4 @@ Welcome to the **KSN Super Store**! This is a modern e-commerce application buil
    - Admin: [http://localhost:3000/admin/orders](http://localhost:3000/admin/orders)
 
 ## Version
-- **Current Version**: v1.0.0
+- **Current Version**: v1.2.0
