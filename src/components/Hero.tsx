@@ -18,19 +18,19 @@ const banners = [
   },
   {
     id: 2,
-    title: "Homemade Specials",
-    description: "Experience the authentic taste of our KSN Homemade Specials.",
-    image: "/images/banner_snacks.png",
-    ctaText: "Explore Specials",
-    ctaLink: "/categories/ksn-homemade"
+    title: "Beauty & Fashion",
+    description: "Experience the premium collection of clothing and accessories.",
+    image: "/images/banner_fashion.png",
+    ctaText: "Shop Fashion",
+    ctaLink: "/categories/beauty-fashion"
   },
   {
     id: 3,
-    title: "Snacks & Sweets",
-    description: "Delicious treats for every occasion from KSN Super Store.",
-    image: "/images/banner_sweets.png",
-    ctaText: "View Snacks",
-    ctaLink: "/categories/snacks-sweets"
+    title: "Premium Electronics",
+    description: "Latest gadgets and home appliances for your modern lifestyle.",
+    image: "/images/banner_electronics.png",
+    ctaText: "View Gadgets",
+    ctaLink: "/categories/mobiles-electronics"
   }
 ];
 
@@ -61,7 +61,6 @@ export default function Hero() {
 
   useEffect(() => {
     if (!emblaApi) return;
-    onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
   }, [emblaApi, onSelect]);

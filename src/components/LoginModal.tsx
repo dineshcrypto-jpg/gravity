@@ -22,8 +22,9 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
     try {
       await signInWithMagicLink(email);
       setIsSent(true);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
               </div>
               <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Check your email!</h2>
               <p className="text-gray-500 text-sm mb-8">
-                We've sent a magic login link to <br /><span className="font-bold text-gray-900">{email}</span>
+                We&apos;ve sent a magic login link to <br /><span className="font-bold text-gray-900">{email}</span>
               </p>
               <button 
                 onClick={onClose}

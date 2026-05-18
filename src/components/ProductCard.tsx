@@ -48,12 +48,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product.id}`} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full block">
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-square overflow-hidden bg-white p-4 border-b border-gray-50">
         <Image
           src={displayImage}
           alt={product.name}
           fill
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
+          className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
         />
         
         {/* Badges/Actions Overlay */}

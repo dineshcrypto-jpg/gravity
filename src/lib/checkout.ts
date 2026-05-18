@@ -158,7 +158,7 @@ export const generateAndDownloadInvoice = (items: CartItem[], total: number, cus
     });
 
     // --- Summary ---
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
     
     doc.setFillColor(249, 250, 251);
     doc.rect(130, finalY - 5, 66, 35, 'F');
@@ -230,7 +230,8 @@ export const saveOrderToSupabase = async (
 
     if (error) throw error;
     return data;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error("Failed to save order to database:", error);
     throw new Error("Database Error: " + (error.message || "Unknown error"));
   }

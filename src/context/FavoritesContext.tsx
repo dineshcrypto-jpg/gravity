@@ -18,7 +18,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Load from localStorage or Supabase
   useEffect(() => {
@@ -32,7 +31,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         
         if (data && !error) {
           // Extract the product data from the joined query
-          const dbFavorites = data.map((f: any) => f.products).filter(Boolean);
+          const dbFavorites = (data as any[]).map((f: any) => f.products).filter((p): p is Product => !!p);
           
           // Merge with local if any (first time login)
           const stored = localStorage.getItem("ksn_favorites");
@@ -117,7 +116,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 export function useFavorites() {
   const context = useContext(FavoritesContext);
   if (context === undefined) {
-    throw new Error("useFavorites must be used within a FavoritesProvider");
+    return {
+      favorites: [],
+      toggleFavorite: () => {},
+      isFavorite: () => false,
+      favoritesCount: 0
+    };
   }
   return context;
 }

@@ -45,9 +45,10 @@ export default function CartPage() {
       // Use window.location.href for reliable handoff to WhatsApp
       window.location.href = waLink;
 
-    } catch (error: any) {
-      console.error("Checkout failed", error);
-      alert("Checkout failed: " + (error.message || "Unknown error"));
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error("Checkout failed", err);
+      alert("Checkout failed: " + (err.message || "Unknown error"));
     } finally {
       setIsCheckingOut(false);
     }
@@ -61,7 +62,7 @@ export default function CartPage() {
             <ShoppingBag className="w-12 h-12" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
-          <p className="text-gray-500 mb-8">Looks like you haven't added anything to your cart yet.</p>
+          <p className="text-gray-500 mb-8">Looks like you haven&apos;t added anything to your cart yet.</p>
           <Link 
             href="/categories" 
             className="w-full flex items-center justify-center px-6 py-4 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-colors"
@@ -95,12 +96,12 @@ export default function CartPage() {
                   <div key={`${item.product.id}-${item.variety.id}`} className="flex flex-col sm:flex-row gap-6 pb-6 border-b border-gray-100 last:border-0 last:pb-0">
                     
                     {/* Item Image */}
-                    <div className="w-full sm:w-32 aspect-square bg-gray-50 rounded-2xl relative overflow-hidden flex-shrink-0">
+                    <div className="w-full sm:w-32 aspect-square bg-white border border-gray-100 rounded-2xl relative overflow-hidden flex-shrink-0 p-2">
                       <Image
                         src={item.product.image_url || "https://placehold.co/400x400?text=No+Image"}
                         alt={item.product.name}
                         fill
-                        className="object-cover"
+                        className="object-contain p-1"
                       />
                     </div>
 

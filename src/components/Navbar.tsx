@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { 
   Search, ShoppingCart, Menu, User, Heart, Sword,
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
@@ -17,7 +19,8 @@ import LoginModal from "./LoginModal";
 
 const iconMap: Record<string, any> = {
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
-  ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home: HomeIcon
+  ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home: HomeIcon,
+  Search, ShoppingCart, Menu, User, Heart, Sword
 };
 
 export default function Navbar() {
@@ -27,14 +30,37 @@ export default function Navbar() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   useEffect(() => {
     async function fetchCategories() {
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-      if (data) setCategories(data);
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          console.error("Supabase error fetching categories:", error);
+          return;
+        }
+
+        if (data) {
+          console.log("Categories loaded successfully:", data.length);
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Unexpected error in Navbar fetch:", err);
+      }
     }
     fetchCategories();
   }, []);
@@ -46,10 +72,6 @@ export default function Navbar() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
             
-            <button className="md:hidden p-2 text-white hover:bg-white/10 rounded-full transition-colors">
-              <Menu className="w-7 h-7" />
-            </button>
-
             <Link href="/" className="flex items-center group bg-white px-8 py-3 rounded-2xl shadow-md border border-gray-100">
               {/* Detailed Aruva Logo exactly like the photo */}
               <div className="flex items-center gap-4">
@@ -87,18 +109,20 @@ export default function Navbar() {
 
 
 
-            <div className="hidden md:flex flex-1 max-w-xl px-8">
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-xl px-8">
               <div className="relative w-full group">
                 <input 
                   type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search for groceries, snacks..." 
                   className="w-full bg-white/20 border border-white/30 text-white placeholder-white/70 text-sm rounded-full focus:ring-2 focus:ring-white focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 block pl-5 pr-12 py-3 transition-all duration-300"
                 />
-                <button className="absolute inset-y-0 right-0 flex items-center pr-4 text-white hover:scale-110 transition-transform">
+                <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-4 text-white hover:scale-110 transition-transform">
                   <Search className="w-5 h-5" />
                 </button>
               </div>
-            </div>
+            </form>
 
             <div className="flex items-center space-x-4 md:space-x-6 text-white">
               <Link href="/favorites" className="flex flex-col items-center justify-center hover:scale-110 transition-transform relative group">
@@ -137,7 +161,13 @@ export default function Navbar() {
                     >
                       <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/50">
                         {user.user_metadata.avatar_url ? (
-                          <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
+                          <Image 
+                            src={user.user_metadata.avatar_url} 
+                            alt="User" 
+                            width={32} 
+                            height={32} 
+                            className="w-full h-full object-cover" 
+                          />
                         ) : (
                           <User className="w-full h-full p-1 bg-white text-brand-600" />
                         )}
@@ -182,43 +212,85 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Category Navigation - White row below colourful layer */}
+      <div className="bg-white border-b border-gray-100 py-3 shadow-xs">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <button 
+            onClick={() => setIsDrawerOpen(true)}
+            className="flex items-center gap-2.5 px-5 py-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-2xl transition-all font-extrabold text-gray-700 hover:text-[#008080] hover:border-brand-200 group shadow-sm text-sm"
+          >
+            <Menu className="w-5 h-5 text-gray-500 group-hover:text-[#008080] transition-colors" />
+            <span className="uppercase tracking-wider">All Departments</span>
+          </button>
+        </div>
+      </div>
       
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
       />
-      
-      {/* Category Navigation - White with subtle shadow */}
-      <div className="bg-white border-b border-gray-100 hidden md:block">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6 py-3 overflow-x-auto no-scrollbar">
-            <Link 
-              href="/" 
-              className="flex items-center gap-2 text-sm font-bold text-[#d64a1e] hover:bg-orange-50 px-4 py-2 rounded-xl transition-all"
-            >
-              <HomeIcon className="w-5 h-5" />
-              HOME
-            </Link>
-            <div className="h-6 w-px bg-gray-200" />
-            
-            {categories.map((category) => {
-              const Icon = iconMap[category.icon || "Apple"] || Apple;
-              return (
-                <Link 
-                  key={category.id}
-                  href={`/categories/${category.slug}`} 
-                  className="flex items-center gap-2 text-sm font-bold text-gray-700 hover:text-[#008080] hover:bg-teal-50 px-4 py-2 rounded-xl transition-all whitespace-nowrap group"
-                >
-                  <div className={`p-1 rounded-lg transition-transform group-hover:scale-110 ${category.color || 'bg-gray-100 text-gray-600'}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  {category.name.toUpperCase()}
-                </Link>
-              );
-            })}
+
+      {/* Slide-out Categories Drawer */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-[100] flex">
+          {/* Backdrop blur */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setIsDrawerOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <div className="relative flex w-80 max-w-[85vw] flex-col bg-white p-6 shadow-2xl transition-transform duration-300 ease-out h-full overflow-y-auto no-scrollbar animate-slide-in">
+            <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-6">
+              <h2 className="text-lg font-black text-gray-900 tracking-tight uppercase">
+                All Departments
+              </h2>
+              <button 
+                onClick={() => setIsDrawerOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <nav className="space-y-1.5">
+              <Link 
+                href="/"
+                onClick={() => setIsDrawerOpen(false)}
+                className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-[#008080] transition-all group border border-transparent hover:border-brand-100"
+              >
+                <div className="p-2 rounded-xl bg-brand-50 text-[#008080]">
+                  <HomeIcon className="w-5 h-5" />
+                </div>
+                <span>All Products</span>
+              </Link>
+              
+              <div className="h-px bg-gray-100 my-4" />
+
+              {categories.map((category) => {
+                const Icon = iconMap[category.icon || "Apple"] || Apple;
+                return (
+                  <Link 
+                    key={category.id}
+                    href={`/categories/${category.slug}`} 
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all group border border-transparent"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-xl transition-transform group-hover:scale-105 ${category.color || 'bg-gray-100 text-gray-600'}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span>{category.name}</span>
+                    </div>
+                    <span className="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

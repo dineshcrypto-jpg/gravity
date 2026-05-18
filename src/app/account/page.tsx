@@ -3,20 +3,21 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { ShoppingBag, MapPin, Phone, User, Loader2, ChevronRight } from "lucide-react";
+import { ShoppingBag, MapPin, User, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Order } from "@/types/database";
 
 export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     async function fetchOrders() {
       if (!user) return;
       setOrdersLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('orders')
         .select('*')
         .eq('user_id', user.id)
@@ -70,7 +71,13 @@ export default function AccountPage() {
                 <div className="flex flex-col items-center text-center">
                   <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-gray-100 mb-4 shadow-md">
                     {user.user_metadata.avatar_url ? (
-                      <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                      <Image 
+                        src={user.user_metadata.avatar_url} 
+                        alt="Profile" 
+                        width={96} 
+                        height={96} 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       <User className="w-full h-full p-4 text-gray-400" />
                     )}
@@ -107,7 +114,7 @@ export default function AccountPage() {
                 </div>
               ) : orders.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                  <p className="text-gray-500 mb-4">You haven't placed any orders yet.</p>
+                  <p className="text-gray-500 mb-4">You haven&apos;t placed any orders yet.</p>
                   <Link href="/categories" className="text-brand-600 font-bold hover:underline">Start Shopping</Link>
                 </div>
               ) : (

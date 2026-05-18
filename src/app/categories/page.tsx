@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
 
 // Mapping icons for display
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ElementType> = {
   Apple,
   Smartphone,
   Shirt,

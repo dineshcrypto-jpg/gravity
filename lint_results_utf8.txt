@@ -1,0 +1,133 @@
+﻿
+> gravity@0.1.0 lint
+> eslint
+
+
+C:\Users\dinesh\Desktop\gravity\scratch\add_omam_water.ts
+  54:17  warning  'vData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\scratch\add_pastas.ts
+  32:11  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\scratch\add_yippee.ts
+  54:17  warning  'vData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\scratch\check_orders.ts
+  9:17  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\scratch\check_orders_table.ts
+  9:17  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\scratch\list_categories.js
+  1:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\dinesh\Desktop\gravity\scratch\restore_yippee.ts
+  30:11  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\src\app\account\page.tsx
+    6:31  warning  'Phone' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    6:53  warning  'ChevronRight' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    7:8   warning  'Image' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   12:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   19:21  warning  'error' is assigned a value but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   73:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  110:62  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+
+C:\Users\dinesh\Desktop\gravity\src\app\admin\orders\page.tsx
+    5:77  warning  'ShieldAlert' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    6:10  warning  'useAuth' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+    7:10  warning  'useRouter' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   14:10  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   34:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dinesh\Desktop\gravity\src\app\admin\orders\page.tsx:34:7
+  32 |     const saved = sessionStorage.getItem("admin_auth");
+  33 |     if (saved === "true") {
+> 34 |       setIsAuthorized(true);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  35 |       fetchOrders();
+  36 |     } else {
+  37 |       setIsLoading(false);  react-hooks/set-state-in-effect
+  225:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\dinesh\Desktop\gravity\src\app\cart\page.tsx
+  48:21  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  64:65  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dinesh\Desktop\gravity\src\app\categories\[slug]\page.tsx
+   5:19   warning  'Category' is defined but never used                             @typescript-eslint/no-unused-vars
+  56:114  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dinesh\Desktop\gravity\src\app\categories\page.tsx
+  11:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\dinesh\Desktop\gravity\src\app\page.tsx
+  54:19  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\src\app\products\[id]\page.tsx
+   71:12  warning  'error' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   97:35  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\dinesh\Desktop\gravity\src\app\products\[id]\page.tsx:97:35
+   95 |   // Shuffle and pick 5
+   96 |   const relatedProducts = relatedPool 
+>  97 |     ? [...relatedPool].sort(() => Math.random() - 0.5).slice(0, 5)
+      |                                   ^^^^^^^^^^^^^ Cannot call impure function
+   98 |     : [];
+   99 |
+  100 |   return (  react-hooks/purity
+  150:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+
+C:\Users\dinesh\Desktop\gravity\src\components\Hero.tsx
+  64:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dinesh\Desktop\gravity\src\components\Hero.tsx:64:5
+  62 |   useEffect(() => {
+  63 |     if (!emblaApi) return;
+> 64 |     onSelect();
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  65 |     emblaApi.on("select", onSelect);
+  66 |     emblaApi.on("reInit", onSelect);
+  67 |   }, [emblaApi, onSelect]);  react-hooks/set-state-in-effect
+
+C:\Users\dinesh\Desktop\gravity\src\components\LoginModal.tsx
+   25:19  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  119:19  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dinesh\Desktop\gravity\src\components\Navbar.tsx
+    6:44  warning  'Sword' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   18:31  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  140:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dinesh\Desktop\gravity\src\components\ProductDetailClient.tsx
+   6:45  warning  'Truck' is defined but never used         @typescript-eslint/no-unused-vars
+  81:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\dinesh\Desktop\gravity\src\context\CartContext.tsx
+  3:54  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\dinesh\Desktop\gravity\src\context\FavoritesContext.tsx
+  21:10  warning  'isSyncing' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  21:21  warning  'setIsSyncing' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  35:44  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\dinesh\Desktop\gravity\src\lib\checkout.ts
+  161:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 43 problems (20 errors, 23 warnings)
+

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Share2, Star, Truck, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Heart, ShoppingCart, Share2, Star, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Product } from "@/types/database";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -78,7 +78,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
       const waLink = getWhatsAppLink(whatsappNumber, [buyNowItem], total, invoiceNum, customerInfo);
       
       window.location.href = waLink;
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       console.error("Buy Now failed", error);
       alert("Checkout failed: " + (error.message || "Unknown error"));
     }

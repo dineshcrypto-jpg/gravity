@@ -2,23 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Loader2, ShoppingBag, Phone, MapPin, Calendar, CheckCircle, Clock, ShieldAlert } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { Loader2, ShoppingBag, Phone, MapPin, Calendar, CheckCircle, Clock } from "lucide-react";
+import { Order, OrderItem } from "@/types/database";
 
 const ADMIN_PASSCODE = "7010364635";
-
-type Order = {
-  id: string;
-  created_at: string;
-  items: any[];
-  total: number;
-  customer_name: string;
-  customer_phone: string;
-  customer_address: string;
-  customer_landmark: string;
-  status: string;
-};
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -29,13 +16,16 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("admin_auth");
-    if (saved === "true") {
-      setIsAuthorized(true);
-      fetchOrders();
-    } else {
-      setIsLoading(false);
-    }
+    const checkAuth = async () => {
+      const saved = sessionStorage.getItem("admin_auth");
+      if (saved === "true") {
+        setIsAuthorized(true);
+        await fetchOrders();
+      } else {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -222,7 +212,7 @@ export default function AdminOrdersPage() {
                   <div className="mb-8">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Items</h4>
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                      {selectedOrder.items.map((item: any, idx: number) => (
+                      {selectedOrder.items.map((item: OrderItem, idx: number) => (
                         <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                           <div className="flex-1">
                             <p className="font-medium text-gray-900 line-clamp-1">{item.product_name}</p>

@@ -14,6 +14,7 @@ const dummyProducts: Product[] = [
     name: "Organic Alphonso Mangoes",
     description: "Sweet and juicy premium mangoes directly from the farm.",
     price: 599,
+    weight: null,
     image_url: "https://images.unsplash.com/photo-1553279768-865429fa0078?q=80&w=400&h=400&auto=format&fit=crop",
     is_in_stock: true,
     created_at: new Date().toISOString()
@@ -24,6 +25,7 @@ const dummyProducts: Product[] = [
     name: "Noise ColorFit Pulse 2",
     description: "Sleek smartwatch with 1.8\" display and health tracking.",
     price: 2499,
+    weight: null,
     image_url: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=400&h=400&auto=format&fit=crop",
     is_in_stock: true,
     created_at: new Date().toISOString()
@@ -34,6 +36,7 @@ const dummyProducts: Product[] = [
     name: "Cotton Slim Fit Shirt",
     description: "Premium breathable cotton shirt for a professional look.",
     price: 1299,
+    weight: null,
     image_url: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=400&h=400&auto=format&fit=crop",
     is_in_stock: true,
     created_at: new Date().toISOString()
@@ -44,6 +47,7 @@ const dummyProducts: Product[] = [
     name: "Fresh Broccoli (500g)",
     description: "Crispy and fresh green broccoli heads.",
     price: 89,
+    weight: null,
     image_url: "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?q=80&w=400&h=400&auto=format&fit=crop",
     is_in_stock: false,
     created_at: new Date().toISOString()
@@ -68,7 +72,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       .eq('id', id)
       .single();
     product = data;
-  } catch (error) {
+  } catch {
     // Ignore error, fallback below
   }
 
@@ -92,8 +96,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .neq('id', id)
     .limit(20);
 
-  // Shuffle and pick 5
-  const relatedProducts = relatedPool 
+  // Shuffle and pick 5 randomly to show dynamic, fresh recommendations on every load
+  const displayedRelated = relatedPool 
     ? [...relatedPool].sort(() => Math.random() - 0.5).slice(0, 5)
     : [];
 
@@ -133,7 +137,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <ProductDetailClient product={product} />
 
         {/* Related Products Section */}
-        {relatedProducts && relatedProducts.length > 0 && (
+        {displayedRelated && displayedRelated.length > 0 && (
           <div className="mt-20">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
@@ -147,7 +151,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {relatedProducts.map((p: any) => (
+              {displayedRelated.map((p: Product) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

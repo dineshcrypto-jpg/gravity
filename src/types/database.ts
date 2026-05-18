@@ -13,7 +13,7 @@ export type Product = {
   name: string;
   description: string | null;
   price: number;
-  weight: string | null;
+  weight?: string | null;
   image_url: string | null;
   is_in_stock: boolean;
   created_at: string;
@@ -27,6 +27,27 @@ export type Variety = {
   name: string;
   label: string;
   price: number;
-  weight: string | null;
+  weight?: string | null;
   image_url?: string | null;
+};
+
+export type OrderItem = {
+  product_id?: string;
+  product_name: string;
+  variety_label: string;
+  quantity: number;
+  price: number;
+};
+
+export type Order = {
+  id: string;
+  created_at: string;
+  user_id?: string;
+  items: OrderItem[];
+  total: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  customer_landmark: string | null;
+  status: string;
 };
