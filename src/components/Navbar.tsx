@@ -32,6 +32,8 @@ export default function Navbar() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = React.useRef(0);
   const router = useRouter();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -65,8 +67,29 @@ export default function Navbar() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // If scrolling down and past 150px, hide the header
+      if (currentScrollY > lastScrollY.current && currentScrollY > 150) {
+        setIsVisible(false);
+        setIsUserMenuOpen(false); // Close user menu too
+      } else {
+        // Scrolling up -> show immediately
+        setIsVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 w-full shadow-lg">
+    <>
+    <header className={`sticky top-0 z-50 w-full shadow-lg transition-transform duration-300 ease-in-out ${isVisible ? "translate-y-0" : "-translate-y-full"}`}>
       {/* Top Brand Bar with Gradient Background from Photo */}
       <div className="bg-gradient-to-r from-[#008080] via-[#98c01d] to-[#d64a1e] py-3 md:py-4">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -225,73 +248,74 @@ export default function Navbar() {
           </button>
         </div>
       </div>
-      
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
-      />
-
-      {/* Slide-out Categories Drawer */}
-      {isDrawerOpen && (
-        <div className="fixed inset-0 z-[100] flex">
-          {/* Backdrop blur */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-
-          {/* Drawer content */}
-          <div className="relative flex w-80 max-w-[85vw] flex-col bg-white p-6 shadow-2xl transition-transform duration-300 ease-out h-full overflow-y-auto no-scrollbar animate-slide-in">
-            <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-6">
-              <h2 className="text-lg font-black text-gray-900 tracking-tight uppercase">
-                All Departments
-              </h2>
-              <button 
-                onClick={() => setIsDrawerOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-lg font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <nav className="space-y-1.5">
-              <Link 
-                href="/"
-                onClick={() => setIsDrawerOpen(false)}
-                className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-[#008080] transition-all group border border-transparent hover:border-brand-100"
-              >
-                <div className="p-2 rounded-xl bg-brand-50 text-[#008080]">
-                  <HomeIcon className="w-5 h-5" />
-                </div>
-                <span>All Products</span>
-              </Link>
-              
-              <div className="h-px bg-gray-100 my-4" />
-
-              {categories.map((category) => {
-                const Icon = iconMap[category.icon || "Apple"] || Apple;
-                return (
-                  <Link 
-                    key={category.id}
-                    href={`/categories/${category.slug}`} 
-                    onClick={() => setIsDrawerOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all group border border-transparent"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-xl transition-transform group-hover:scale-105 ${category.color || 'bg-gray-100 text-gray-600'}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span>{category.name}</span>
-                    </div>
-                    <span className="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-      )}
     </header>
+
+    <LoginModal 
+      isOpen={isLoginModalOpen} 
+      onClose={() => setIsLoginModalOpen(false)} 
+    />
+
+    {/* Slide-out Categories Drawer */}
+    {isDrawerOpen && (
+      <div className="fixed inset-0 z-[100] flex">
+        {/* Backdrop blur */}
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+          onClick={() => setIsDrawerOpen(false)}
+        />
+
+        {/* Drawer content */}
+        <div className="relative flex w-80 max-w-[85vw] flex-col bg-white p-6 shadow-2xl transition-transform duration-300 ease-out h-full overflow-y-auto no-scrollbar animate-slide-in">
+          <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-6">
+            <h2 className="text-lg font-black text-gray-900 tracking-tight uppercase">
+              All Departments
+            </h2>
+            <button 
+              onClick={() => setIsDrawerOpen(false)}
+              className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-lg font-bold"
+            >
+              ✕
+            </button>
+          </div>
+
+          <nav className="space-y-1.5">
+            <Link 
+              href="/"
+              onClick={() => setIsDrawerOpen(false)}
+              className="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-[#008080] transition-all group border border-transparent hover:border-brand-100"
+            >
+              <div className="p-2 rounded-xl bg-brand-50 text-[#008080]">
+                <HomeIcon className="w-5 h-5" />
+              </div>
+              <span>All Products</span>
+            </Link>
+            
+            <div className="h-px bg-gray-100 my-4" />
+
+            {categories.map((category) => {
+              const Icon = iconMap[category.icon || "Apple"] || Apple;
+              return (
+                <Link 
+                  key={category.id}
+                  href={`/categories/${category.slug}`} 
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all group border border-transparent"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-2 rounded-xl transition-transform group-hover:scale-105 ${category.color || 'bg-gray-100 text-gray-600'}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span>{category.name}</span>
+                  </div>
+                  <span className="text-gray-400 group-hover:translate-x-1 transition-transform">→</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
 
