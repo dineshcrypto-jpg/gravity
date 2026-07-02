@@ -2,6 +2,7 @@ import React from "react";
 import { supabase } from "@/lib/supabase";
 import ProductCard from "@/components/ProductCard";
 import Sidebar from "@/components/Sidebar";
+import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
 import Link from "next/link";
 import { Search } from "lucide-react";
@@ -25,7 +26,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       .order("name");
     
     if (data) {
-      products = data;
+      products = deduplicateProducts(data);
     }
   }
 

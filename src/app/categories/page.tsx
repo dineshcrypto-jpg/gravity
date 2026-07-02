@@ -66,7 +66,7 @@ export default async function CategoriesPage() {
 
                 <div className="flex items-center text-brand-600 font-bold group-hover:gap-2 transition-all">
                   <span>Browse Products</span>
-                  <ChevronRight className="w-5 h-5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-5 h-5 ml-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 </div>
               </Link>
             );

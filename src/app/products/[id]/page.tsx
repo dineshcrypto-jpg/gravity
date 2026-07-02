@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types/database";
+import { fixProduct, deduplicateProducts } from "@/lib/deduplicate";
 
 const dummyProducts: Product[] = [
   {
@@ -64,29 +65,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
   // Try to fetch from Supabase
-  let product = null;
+  let rawProduct = null;
   try {
     const { data } = await supabase
       .from('products')
       .select('*, categories(name, slug), varieties(*)')
       .eq('id', id)
       .single();
-    product = data;
+    rawProduct = data;
   } catch {
     // Ignore error, fallback below
   }
 
   // Fallback to dummy data if not found in Supabase
-  if (!product) {
+  if (!rawProduct) {
     const fallbackProduct = dummyProducts.find(p => p.id === id);
     if (fallbackProduct) {
-      product = { ...fallbackProduct, categories: { name: "Featured", slug: "featured" }, varieties: [] };
+      rawProduct = { ...fallbackProduct, categories: { name: "Featured", slug: "featured" }, varieties: [] };
     }
   }
 
-  if (!product) {
+  if (!rawProduct) {
     notFound();
   }
+
+  const product = fixProduct(rawProduct);
 
   // 3. Fetch Related Products
   const { data: relatedPool } = await supabase
@@ -96,10 +99,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .neq('id', id)
     .limit(20);
 
-  // Shuffle and pick 5 randomly to show dynamic, fresh recommendations on every load
-  const displayedRelated = relatedPool 
-    ? [...relatedPool].sort(() => Math.random() - 0.5).slice(0, 5)
-    : [];
+  // Shuffle, deduplicate, and pick 5
+  const displayedRelated = relatedPool ? deduplicateProducts(relatedPool).slice(0, 5) : [];
 
   return (
     <main className="min-h-screen bg-gray-50 py-8 md:py-12">

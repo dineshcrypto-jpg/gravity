@@ -132,17 +132,57 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                </span>
             )}
           </div>
-          
-          <div className="relative w-full aspect-square max-w-md mx-auto transform transition-all duration-500 hover:scale-105">
-            <Image
-              src={selectedVariety.image_url || product.image_url || "https://placehold.co/800x800?text=No+Image"}
-              alt={product.name}
-              fill
-              className="object-contain animate-in fade-in zoom-in duration-500"
-              key={selectedVariety.id} // This forces a re-render/animation when the variety changes
-              priority
-            />
-          </div>
+          {/* Safe image url parsing */}
+          {(() => {
+            const rawUrl = selectedVariety.image_url || product.image_url;
+            
+            const isValidUrl = (url: string | null | undefined): boolean => {
+              if (!url) return false;
+              const cleanUrl = url.trim();
+              if (cleanUrl.startsWith('/') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+                if (cleanUrl.includes('PASTE_IMAGE_URL_HERE') || cleanUrl.includes('PASTE_IMAGE_UR')) {
+                  return false;
+                }
+                
+                if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+                  try {
+                    const parsedUrl = new URL(cleanUrl);
+                    const hostname = parsedUrl.hostname;
+                    const supabaseHost = (() => {
+                      try {
+                        return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname;
+                      } catch { return ''; }
+                    })();
+                    const allowedHosts = [
+                      'images.unsplash.com',
+                      supabaseHost,
+                      'placehold.co'
+                    ].filter(Boolean);
+                    return allowedHosts.some(host => hostname === host || hostname.endsWith('.' + host));
+                  } catch (e) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+              return false;
+            };
+
+            const displayImg = isValidUrl(rawUrl) ? rawUrl! : "https://placehold.co/800x800?text=No+Image";
+
+            return (
+              <div className="relative w-full aspect-square max-w-md mx-auto transform transition-all duration-500 hover:scale-105">
+                <Image
+                  src={displayImg}
+                  alt={product.name}
+                  fill
+                  className="object-contain animate-in fade-in zoom-in duration-500"
+                  key={selectedVariety.id} // This forces a re-render/animation when the variety changes
+                  priority
+                />
+              </div>
+            );
+          })()}
         </div>
 
         {/* Right Side - Product Details */}

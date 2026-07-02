@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProductCard from "@/components/ProductCard";
+import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
 
 interface CategoryPageProps {
@@ -25,11 +26,20 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // 2. Fetch products in this category
-  const { data: products } = await supabase
+  let query = supabase
     .from('products')
-    .select('*, varieties(*)')
-    .eq('category_id', category.id)
-    .order('created_at', { ascending: false });
+    .select('*, varieties(*)');
+    
+  if (slug === 'home-cleaning') {
+    // If it's home-cleaning, fetch both assigned products and any orphan products (category_id is null)
+    query = query.or(`category_id.eq.${category.id},category_id.is.null`);
+  } else {
+    query = query.eq('category_id', category.id);
+  }
+
+  const { data: rawProducts } = await query.order('created_at', { ascending: false });
+
+  const products = deduplicateProducts(rawProducts);
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 md:py-16">
@@ -39,7 +49,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="w-full flex flex-col">
           
           {/* Category Hero Header */}
-          <div className="mb-12 bg-white rounded-[3rem] p-8 md:p-12 border border-gray-100 shadow-sm relative overflow-hidden group">
+          <div className="mb-8 md:mb-12 bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 border border-gray-100 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50 group-hover:bg-brand-100 transition-colors duration-500"></div>
             
             <div className="relative z-10">
@@ -71,7 +81,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
           {/* Product Grid */}
           {products && products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
               {products.map((product: Product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

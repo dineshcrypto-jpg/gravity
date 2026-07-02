@@ -113,7 +113,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useFavorites() {
+export function useFavorites(): FavoritesContextType {
   const context = useContext(FavoritesContext);
   if (context === undefined) {
     return {

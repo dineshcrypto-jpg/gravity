@@ -1,6 +1,8 @@
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
+import DealOfTheDay from "@/components/DealOfTheDay";
 import { supabase } from "@/lib/supabase";
+import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
 
 // Fallback products if the database is empty or not yet set up
@@ -58,18 +60,20 @@ export default async function Home() {
     const { data } = await supabase
       .from('products')
       .select('*, varieties(*)')
-      .limit(30);
+      .limit(60); // fetch more to account for duplicates
     
     if (data && data.length > 0) {
-      // Randomly shuffle products in memory to provide a fresh home page experience
-      products = [...data].sort(() => Math.random() - 0.5).slice(0, 8);
-    } else {
-      products = dummyProducts;
-    }
+        // Take first 8 items after deduplication
+        products = deduplicateProducts(data).slice(0, 8);
+      } else {
+        products = dummyProducts;
+      }
   } catch (error) {
     console.error("Error fetching products:", error);
     products = dummyProducts;
   }
+
+  const dealProduct = products[0] || dummyProducts[0];
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20 mt-8">
@@ -78,8 +82,13 @@ export default async function Home() {
         {/* Main feed */}
         <div className="w-full flex flex-col gap-12">
           
-          {/* Hero Section with Advertisement Carousel */}
-          <Hero />
+          {/* Top Banner & Hot Deal Layout Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <Hero className="lg:col-span-2 relative w-full mt-6" />
+            <div className="lg:col-span-1 flex items-center justify-center mt-6">
+              <DealOfTheDay product={dealProduct} />
+            </div>
+          </div>
           
           {/* Top Products Section */}
           <div>
@@ -99,7 +108,7 @@ export default async function Home() {
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

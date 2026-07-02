@@ -17,16 +17,31 @@ import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
 import LoginModal from "./LoginModal";
 
-const iconMap: Record<string, any> = {
-  Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
-  ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home: HomeIcon,
-  Search, ShoppingCart, Menu, User, Heart, Sword
+const iconMap: Record<string, React.ElementType> = {
+  Apple,
+  Smartphone,
+  Shirt,
+  Coffee,
+  Sparkles,
+  Gamepad2,
+  ShoppingBasket,
+  Leaf,
+  Cookie,
+  PenTool,
+  Utensils,
+  Home: HomeIcon,
+  Search,
+  ShoppingCart,
+  Menu,
+  User,
+  Heart,
+  Sword,
 };
 
 export default function Navbar() {
   const { cartCount } = useCart();
   const { favoritesCount } = useFavorites();
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, authError } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -35,6 +50,12 @@ export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = React.useRef(0);
   const router = useRouter();
+
+useEffect(() => {
+  if (authError) {
+    setTimeout(() => setIsLoginModalOpen(true), 0);
+  }
+}, [authError]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +116,10 @@ export default function Navbar() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
             
-            <Link href="/" className="flex items-center group bg-white px-8 py-3 rounded-2xl shadow-md border border-gray-100">
+            <Link href="/" className="flex items-center group bg-white px-3 py-1.5 md:px-8 md:py-3 rounded-2xl shadow-md border border-gray-100">
               {/* Detailed Aruva Logo exactly like the photo */}
-              <div className="flex items-center gap-4">
-                <svg className="w-10 md:w-12 h-20 md:h-24 drop-shadow-sm" viewBox="0 0 100 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="flex items-center gap-2 md:gap-4">
+                <svg className="w-7 md:w-12 h-14 md:h-24 drop-shadow-sm" viewBox="0 0 100 250" fill="none" xmlns="http://www.w3.org/2000/svg">
                   {/* The sharp curved blade */}
                   <path d="M50 200V70C50 40 30 20 10 20C40 10 70 30 70 70V200" fill="black" />
                   
@@ -123,8 +144,8 @@ export default function Navbar() {
                   </g>
                 </svg>
                 <div className="flex flex-col">
-                  <span className="text-3xl md:text-5xl font-black italic tracking-tighter text-black leading-none">K.S.N</span>
-                  <span className="text-sm md:text-base font-bold tracking-[0.2em] text-black/90 leading-none mt-2">SUPER STORE</span>
+                  <span className="text-xl md:text-5xl font-black italic tracking-tighter text-black leading-none">K.S.N</span>
+                  <span className="text-[8px] md:text-base font-bold tracking-[0.15em] md:tracking-[0.2em] text-black/90 leading-none mt-1 md:mt-2">SUPER STORE</span>
                 </div>
               </div>
             </Link>
@@ -180,6 +201,7 @@ export default function Navbar() {
                   <div className="flex flex-col items-center">
                     <button 
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      onTouchEnd={() => setIsUserMenuOpen(!isUserMenuOpen)}
                       className="flex flex-col items-center justify-center hover:scale-110 transition-transform relative group"
                     >
                       <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/50">
@@ -200,7 +222,7 @@ export default function Navbar() {
 
                     {/* Simple Dropdown */}
                     {isUserMenuOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 text-gray-900 z-[60]">
+                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 text-gray-900 z-[60] pointer-events-auto">
                         <div className="px-4 py-2 border-b border-gray-50 mb-1">
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Logged in as</p>
                           <p className="text-sm font-bold truncate">{user.user_metadata.full_name || user.email}</p>
@@ -214,6 +236,7 @@ export default function Navbar() {
                         </Link>
                         <button 
                           onClick={() => { signOut(); setIsUserMenuOpen(false); }}
+                          onTouchEnd={() => { signOut(); setIsUserMenuOpen(false); }}
                           className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors"
                         >
                           <LogOut className="w-4 h-4" /> Logout
@@ -238,14 +261,31 @@ export default function Navbar() {
 
       {/* Category Navigation - White row below colourful layer */}
       <div className="bg-white border-b border-gray-100 py-3 shadow-xs">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
           <button 
             onClick={() => setIsDrawerOpen(true)}
-            className="flex items-center gap-2.5 px-5 py-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-2xl transition-all font-extrabold text-gray-700 hover:text-[#008080] hover:border-brand-200 group shadow-sm text-sm"
+            onTouchEnd={() => setIsDrawerOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-2xl transition-all font-extrabold text-gray-700 hover:text-[#008080] hover:border-brand-200 group shadow-sm text-xs md:text-sm shrink-0"
           >
-            <Menu className="w-5 h-5 text-gray-500 group-hover:text-[#008080] transition-colors" />
+            <Menu className="w-4 h-4 md:w-5 md:h-5 text-gray-500 group-hover:text-[#008080] transition-colors" />
             <span className="uppercase tracking-wider">All Departments</span>
           </button>
+
+          {/* Mobile Search Bar - Visible only on mobile/tablet */}
+          <form onSubmit={handleSearchSubmit} className="flex md:hidden flex-1 max-w-sm">
+            <div className="relative w-full group">
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..." 
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 text-xs rounded-2xl focus:ring-2 focus:ring-[#008080] focus:bg-white block pl-4 pr-10 py-2 transition-all duration-300 outline-none"
+              />
+              <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-[#008080]">
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </header>
@@ -312,6 +352,58 @@ export default function Navbar() {
               );
             })}
           </nav>
+
+          {/* Mobile Drawer Quick Links */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-3 px-2">
+              Quick Links
+            </h3>
+            <nav className="space-y-1">
+              <Link 
+                href="/favorites"
+                onClick={() => setIsDrawerOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#008080] transition-all"
+              >
+                <Heart className="w-4 h-4 text-gray-400" />
+                <span>My Wishlist ({favoritesCount})</span>
+              </Link>
+              <Link 
+                href="/cart"
+                onClick={() => setIsDrawerOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#008080] transition-all"
+              >
+                <ShoppingCart className="w-4 h-4 text-gray-400" />
+                <span>My Cart ({cartCount})</span>
+              </Link>
+              {user ? (
+                <>
+                  <Link 
+                    href="/account"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#008080] transition-all"
+                  >
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span>My Profile</span>
+                  </Link>
+                  <button 
+                    onClick={() => { signOut(); setIsDrawerOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-bold text-red-600 hover:bg-red-50 w-full text-left transition-all"
+                  >
+                    <LogOut className="w-4 h-4 text-red-400" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => { setIsDrawerOpen(false); setIsLoginModalOpen(true); }}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#008080] w-full text-left transition-all"
+                >
+                  <LogIn className="w-4 h-4 text-gray-400" />
+                  <span>Login / Register</span>
+                </button>
+              )}
+            </nav>
+          </div>
         </div>
       </div>
     )}
