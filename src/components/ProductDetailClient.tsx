@@ -7,7 +7,7 @@ import { Heart, ShoppingCart, Share2, Star, ShieldCheck, CheckCircle2 } from "lu
 import { Product } from "@/types/database";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { generateAndDownloadInvoice, getWhatsAppLink, saveOrderToSupabase } from "@/lib/checkout";
+import { getWhatsAppLink, saveOrderToSupabase } from "@/lib/checkout";
 import { useAuth } from "@/context/AuthContext";
 
 interface ProductDetailClientProps {
@@ -72,10 +72,9 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         await saveOrderToSupabase(user.id, [buyNowItem], total, customerInfo);
       }
 
-      // 2. Generate PDF & WhatsApp
-      const invoiceNum = generateAndDownloadInvoice([buyNowItem], total, customerInfo);
+      // 2. Open WhatsApp link
       const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919710149758";
-      const waLink = getWhatsAppLink(whatsappNumber, [buyNowItem], total, invoiceNum, customerInfo);
+      const waLink = getWhatsAppLink(whatsappNumber, [buyNowItem], total, customerInfo);
       
       window.location.href = waLink;
     } catch (err: unknown) {

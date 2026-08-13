@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { Trash2, ArrowRight, ShoppingBag, Loader2 } from "lucide-react";
-import { generateAndDownloadInvoice, getWhatsAppLink, saveOrderToSupabase } from "@/lib/checkout";
+import { getWhatsAppLink, saveOrderToSupabase } from "@/lib/checkout";
 import { useAuth } from "@/context/AuthContext";
 
 export default function CartPage() {
@@ -35,12 +35,9 @@ export default function CartPage() {
       console.log("Saving order...", { userId: user?.id, items, finalTotal, customerInfo });
       await saveOrderToSupabase(user?.id, items, finalTotal, customerInfo);
 
-      // 2. Generate and download PDF
-      const invoiceNum = generateAndDownloadInvoice(items, finalTotal, customerInfo);
-      
-      // 3. Open WhatsApp
+      // 2. Open WhatsApp
       const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919710149758";
-      const waLink = getWhatsAppLink(whatsappNumber, items, finalTotal, invoiceNum, customerInfo);
+      const waLink = getWhatsAppLink(whatsappNumber, items, finalTotal, customerInfo);
       
       // Use window.location.href for reliable handoff to WhatsApp
       window.location.href = waLink;
@@ -238,7 +235,7 @@ export default function CartPage() {
                 {isCheckingOut ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Generating PDF...
+                    Placing Order...
                   </>
                 ) : (
                   <>
@@ -249,7 +246,7 @@ export default function CartPage() {
               </button>
               
               <p className="text-xs text-center text-gray-500 mt-4">
-                Clicking this will download your invoice and open WhatsApp to send your order directly to us.
+                Clicking this will open WhatsApp to send your order directly to us.
               </p>
             </div>
           </div>
