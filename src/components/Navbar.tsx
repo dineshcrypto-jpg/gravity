@@ -57,6 +57,17 @@ useEffect(() => {
   }
 }, [authError]);
 
+useEffect(() => {
+  if (isDrawerOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isDrawerOpen]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -201,7 +212,6 @@ useEffect(() => {
                   <div className="flex flex-col items-center">
                     <button 
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      onTouchEnd={() => setIsUserMenuOpen(!isUserMenuOpen)}
                       className="flex flex-col items-center justify-center hover:scale-110 transition-transform relative group"
                     >
                       <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/50">
@@ -236,7 +246,6 @@ useEffect(() => {
                         </Link>
                         <button 
                           onClick={() => { signOut(); setIsUserMenuOpen(false); }}
-                          onTouchEnd={() => { signOut(); setIsUserMenuOpen(false); }}
                           className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors"
                         >
                           <LogOut className="w-4 h-4" /> Logout
@@ -263,9 +272,9 @@ useEffect(() => {
       <div className="bg-white border-b border-gray-100 py-3 shadow-xs">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
           <button 
+            type="button"
             onClick={() => setIsDrawerOpen(true)}
-            onTouchEnd={() => setIsDrawerOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 rounded-2xl transition-all font-extrabold text-gray-700 hover:text-[#008080] hover:border-brand-200 group shadow-sm text-xs md:text-sm shrink-0"
+            className="flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-gray-50 border border-gray-100 hover:bg-gray-100 active:bg-gray-200 rounded-2xl transition-all font-extrabold text-gray-700 hover:text-[#008080] hover:border-brand-200 group shadow-sm text-xs md:text-sm shrink-0 cursor-pointer"
           >
             <Menu className="w-4 h-4 md:w-5 md:h-5 text-gray-500 group-hover:text-[#008080] transition-colors" />
             <span className="uppercase tracking-wider">All Departments</span>
@@ -297,20 +306,21 @@ useEffect(() => {
 
     {/* Slide-out Categories Drawer */}
     {isDrawerOpen && (
-      <div className="fixed inset-0 z-[100] flex">
+      <div className="fixed inset-0 z-[100] flex animate-in fade-in duration-200">
         {/* Backdrop blur */}
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsDrawerOpen(false)}
         />
 
         {/* Drawer content */}
-        <div className="relative flex w-80 max-w-[85vw] flex-col bg-white p-6 shadow-2xl transition-transform duration-300 ease-out h-full overflow-y-auto no-scrollbar animate-slide-in">
+        <div className="relative z-10 flex w-80 max-w-[85vw] flex-col bg-white p-6 shadow-2xl transition-transform duration-300 ease-out h-full overflow-y-auto no-scrollbar animate-in slide-in-from-left duration-300">
           <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-6">
             <h2 className="text-lg font-black text-gray-900 tracking-tight uppercase">
               All Departments
             </h2>
             <button 
+              type="button"
               onClick={() => setIsDrawerOpen(false)}
               className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-lg font-bold"
             >

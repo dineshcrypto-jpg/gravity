@@ -99,9 +99,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Badges/Actions Overlay */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
           <button 
+            type="button"
             onClick={handleFavorite}
-            onTouchEnd={handleFavorite}
-            className={`p-2.5 backdrop-blur-sm rounded-full shadow-md transition-colors touch-manipulation ${
+            aria-label="Toggle favorite"
+            className={`p-2.5 backdrop-blur-sm rounded-full shadow-md transition-colors touch-manipulation cursor-pointer ${
               isFav ? "bg-red-50 text-red-500" : "bg-white/90 text-gray-600 hover:text-red-500 hover:bg-white"
             }`}
             style={{ pointerEvents: 'auto' }}
@@ -147,17 +148,19 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
           
           <button 
+            type="button"
             disabled={!product.is_in_stock}
             onClick={handleAddToCart}
-            onTouchEnd={product.is_in_stock ? handleAddToCart : undefined}
-            className={`p-2.5 rounded-xl transition-all duration-300 z-20 touch-manipulation ${
+            aria-label={product.is_in_stock ? `Add ${product.name} to cart` : "Out of stock"}
+            className={`px-3 py-2 md:px-4 md:py-2 rounded-xl font-bold text-xs md:text-sm flex items-center gap-1.5 transition-all duration-200 z-20 shadow-sm active:scale-95 cursor-pointer ${
               product.is_in_stock 
-                ? "bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white shadow-sm" 
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                ? "bg-[#008080] text-white hover:bg-[#006666] hover:shadow-md" 
+                : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
             }`}
             style={{ pointerEvents: 'auto' }}
           >
-            <ShoppingCart className="w-5 h-5" />
+            <ShoppingCart className="w-4 h-4 shrink-0" />
+            <span>{product.is_in_stock ? "+ Add" : "Out"}</span>
           </button>
         </div>
       </div>

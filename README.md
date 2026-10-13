@@ -53,4 +53,4 @@ This is a Next.js app and needs a Node.js server. The easiest way to deploy is *
 > **Note:** This app CANNOT be deployed to simple shared hosting (GoDaddy, Hostinger, etc.) that only serves static HTML files. It requires a Node.js server.
 
 ## Version
-- **Current Version**: v1.2.5
+- **Current Version**: v1.2.6

@@ -8,8 +8,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
   signInWithMagicLink: (email: string) => Promise<void>;
+  verifyOtp: (email: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
   authError: string | null;
   clearAuthError: () => void;
@@ -77,17 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
-    setAuthError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) throw error;
-  };
-
   const signInWithMagicLink = async (email: string) => {
     setAuthError(null);
     const { error } = await supabase.auth.signInWithOtp({
@@ -99,13 +88,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const verifyOtp = async (email: string, token: string) => {
+    setAuthError(null);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: token.trim(),
+      type: "email",
+    });
+    if (error) throw error;
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInWithMagicLink, signOut, authError, clearAuthError }}>
+    <AuthContext.Provider value={{ user, session, loading, signInWithMagicLink, verifyOtp, signOut, authError, clearAuthError }}>
       {children}
     </AuthContext.Provider>
   );

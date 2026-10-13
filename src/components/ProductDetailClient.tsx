@@ -275,11 +275,12 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
 
             <button 
+              type="button"
               disabled={!product.is_in_stock}
               onClick={handleAddToCart}
-              className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-bold text-lg transition-all duration-300 shadow-lg ${
+              className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-extrabold text-base md:text-lg transition-all duration-300 shadow-md ${
                 product.is_in_stock 
-                  ? "bg-brand-600 text-white hover:bg-brand-700 hover:shadow-brand-500/30 transform hover:-translate-y-0.5" 
+                  ? "bg-[#008080] text-white hover:bg-[#006666] shadow-[#008080]/30 hover:shadow-lg active:scale-98 cursor-pointer" 
                   : "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
               }`}
             >

@@ -1,62 +1,98 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Mail, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Mail, Loader2, Sparkles, CheckCircle2, ArrowLeft, RefreshCw, KeyRound, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const { signInWithMagicLink, signInWithGoogle, authError, clearAuthError } = useAuth();
+  const { signInWithMagicLink, verifyOtp, authError, clearAuthError } = useAuth();
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("saved_login_email");
+      if (saved && !email) {
+        setEmail(saved);
+      }
+    }
+  }, []);
 
   if (!isOpen) return null;
 
-  const getFriendlyErrorMessage = (msg: string | null) => {
-    if (!msg) return null;
-    const lower = msg.toLowerCase();
-    if (lower.includes("provider google is not enabled") || lower.includes("unsupported_provider") || lower.includes("google provider")) {
-      return "Google login is not enabled in the database. Please configure Google OAuth in your Supabase dashboard (Authentication > Providers > Google), or use the Email Magic Link instead.";
-    }
-    return msg;
-  };
-
-  const activeError = getFriendlyErrorMessage(error || authError);
+  const activeError = error || authError;
 
   const handleClose = () => {
     setError(null);
     clearAuthError();
+    setIsSent(false);
+    setIsVerified(false);
+    setOtp("");
+    setResendStatus(null);
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
+  const handleSendLink = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!email.trim()) return;
 
     setLoading(true);
     setError(null);
     clearAuthError();
     try {
-      await signInWithMagicLink(email);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("saved_login_email", email.trim());
+      }
+      await signInWithMagicLink(email.trim());
       setIsSent(true);
+      setResendStatus(null);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Something went wrong. Please try again.");
+      setError(error.message || "Failed to send login code. Please check your email address.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp.trim()) {
+      setError("Please enter the 6-digit code.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     clearAuthError();
     try {
-      await signInWithGoogle();
+      await verifyOtp(email.trim(), otp.trim());
+      setIsVerified(true);
+      setTimeout(() => {
+        handleClose();
+      }, 1200);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Google sign-in failed. Please try again.");
+      setError(error.message || "Invalid or expired code. Please enter the correct code or request a new one.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError(null);
+    setResendStatus(null);
+    setLoading(true);
+    try {
+      await signInWithMagicLink(email.trim());
+      setResendStatus("New code sent! Check your inbox.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Failed to resend code.");
     } finally {
       setLoading(false);
     }
@@ -71,23 +107,37 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+          type="button"
+          aria-label="Close modal"
+          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all cursor-pointer z-10"
         >
           <X className="w-6 h-6" />
         </button>
 
         <div className="p-8 md:p-10">
-          {!isSent ? (
+          {isVerified ? (
+            /* Step 3: Verified Success */
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">Welcome!</h2>
+              <p className="text-gray-500 text-sm">
+                You are successfully logged in. Your session will remain saved.
+              </p>
+            </div>
+          ) : !isSent ? (
+            /* Step 1: Enter Email */
             <>
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-brand-600" />
+                  <Sparkles className="w-8 h-8 text-[#008080]" />
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">Welcome Back</h2>
-                <p className="text-gray-500 text-sm">Login to save your favorites and see your orders.</p>
+                <p className="text-gray-500 text-sm">Login to save your favorites, track orders, and stay logged in.</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSendLink} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
                   <div className="relative">
@@ -102,7 +152,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                         if (authError) clearAuthError();
                       }}
                       placeholder="name@example.com"
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand-500 focus:bg-white outline-none transition-all text-sm"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008080] focus:bg-white outline-none transition-all text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -114,60 +164,96 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                 <button 
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-[#008080] text-white rounded-2xl font-bold hover:bg-[#006666] transition-all shadow-lg shadow-[#008080]/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Send Login Link"
+                    "Send Login Code & Link"
                   )}
                 </button>
+
+                <div className="flex items-center justify-center gap-2 pt-2 text-xs text-gray-400">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Your login session stays saved permanently</span>
+                </div>
               </form>
-
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-100"></div>
-                </div>
-                <div className="relative flex justify-center text-xs font-bold uppercase tracking-widest text-gray-400">
-                  <span className="bg-white px-4">Or continue with</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                    </svg>
-                    Google (Requires Setup)
-                  </>
-                )}
-              </button>
             </>
           ) : (
-            <div className="text-center py-8">
-              <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 className="w-10 h-10 text-green-500" />
-              </div>
-              <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Check your email!</h2>
-              <p className="text-gray-500 text-sm mb-8">
-                We&apos;ve sent a magic login link to <br /><span className="font-bold text-gray-900">{email}</span>
-              </p>
+            /* Step 2: Clear Guide for Magic Link Email */
+            <div>
               <button 
-                onClick={handleClose}
-                className="px-8 py-3 bg-gray-100 text-gray-900 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                type="button"
+                onClick={() => { setIsSent(false); setError(null); }}
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors mb-4 cursor-pointer"
               >
-                Close
+                <ArrowLeft className="w-4 h-4" />
+                <span>Change Email</span>
               </button>
+
+              <div className="text-center mb-5">
+                <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Mail className="w-8 h-8 text-[#008080]" />
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-1">Check Your Gmail</h2>
+                <p className="text-gray-600 text-xs">
+                  We sent a login email to <br /><span className="font-extrabold text-gray-900 text-sm">{email}</span>
+                </p>
+              </div>
+
+              {/* Exact Email Preview Card */}
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-4 mb-4 text-left">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Look for this in your inbox:</p>
+                <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-xs space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-gray-900">From: Supabase Auth</span>
+                    <span className="text-[10px] text-gray-400">noreply@mail.app.supabase.io</span>
+                  </div>
+                  <p className="text-xs text-gray-700 font-semibold">Subject: Magic Link</p>
+                  <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Click the link:</span>
+                    <span className="text-xs font-extrabold text-blue-600 underline">Log In</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Spam Notice */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 text-left">
+                <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                  💡 <strong>Can&apos;t see it?</strong> Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+                </p>
+              </div>
+
+              {activeError && (
+                <p className="text-xs font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100 whitespace-pre-line leading-relaxed mb-4">{activeError}</p>
+              )}
+
+              {resendStatus && (
+                <p className="text-xs font-bold text-emerald-600 bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center mb-4">{resendStatus}</p>
+              )}
+
+              {/* Open Gmail Button */}
+              <a 
+                href="https://mail.google.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full py-4 bg-[#008080] text-white rounded-2xl font-bold hover:bg-[#006666] transition-all shadow-lg shadow-[#008080]/20 flex items-center justify-center gap-2 text-center cursor-pointer mb-3"
+              >
+                <Mail className="w-5 h-5" />
+                <span>Open Gmail Inbox</span>
+              </a>
+
+              <div className="text-center pt-2">
+                <button 
+                  type="button"
+                  onClick={handleResend}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#008080] hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                  <span>Didn&apos;t receive it? Resend Email</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
