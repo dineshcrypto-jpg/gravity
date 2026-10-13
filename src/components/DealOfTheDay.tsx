@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
 import { ShoppingCart, Heart, Flame } from "lucide-react";
 import { Product } from "@/types/database";
@@ -55,7 +55,7 @@ export default function DealOfTheDay({ product }: DealOfTheDayProps) {
   const displayImage = 
     (displayVariety ? displayVariety.image_url : null) || 
     product.image_url || 
-    "https://placehold.co/400x400?text=No+Image";
+    "/images/placeholder.svg";
 
   const handleAddToCart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -111,7 +111,7 @@ export default function DealOfTheDay({ product }: DealOfTheDayProps) {
       <div className="flex gap-4 items-center my-3 z-10">
         {/* Image Container */}
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-2xl p-2 shadow-inner border border-amber-100 flex-shrink-0 overflow-hidden">
-          <Image
+          <SafeImage
             src={displayImage}
             alt={product.name}
             fill

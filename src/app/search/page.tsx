@@ -21,12 +21,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   if (query) {
     const { data } = await supabase
       .from("products")
-      .select("*, varieties(*)")
+      .select("*, varieties(*), categories(*)")
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
       .order("name");
     
     if (data) {
-      products = deduplicateProducts(data);
+      const visibleData = data.filter((item: any) => !item.categories?.is_hidden);
+      products = deduplicateProducts(visibleData);
     }
   }
 

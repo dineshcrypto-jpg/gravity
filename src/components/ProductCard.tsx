@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Product } from "@/types/database";
@@ -25,48 +25,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const displayPrice = displayVariety ? displayVariety.price : product.price;
   const displayWeight = displayVariety ? displayVariety.weight : product.weight;
   
-  let displayImage = 
+  const displayImage = 
     (displayVariety ? displayVariety.image_url : null) || 
     product.image_url || 
-    "https://placehold.co/400x400?text=No+Image";
-
-  // Validate the URL format to prevent Next.js image component crashes
-  const isValidUrl = (url: string | null | undefined): boolean => {
-    if (!url) return false;
-    const cleanUrl = url.trim();
-    if (cleanUrl.startsWith('/') || cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-      if (cleanUrl.includes('PASTE_IMAGE_URL_HERE') || cleanUrl.includes('PASTE_IMAGE_UR')) {
-        return false;
-      }
-      
-      // Parse the domain to verify Next.js configuration alignment
-      if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-        try {
-          const parsedUrl = new URL(cleanUrl);
-          const hostname = parsedUrl.hostname;
-          const supabaseHost = (() => {
-            try {
-              return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname;
-            } catch { return ''; }
-          })();
-          const allowedHosts = [
-            'images.unsplash.com',
-            supabaseHost,
-            'placehold.co'
-          ].filter(Boolean);
-          return allowedHosts.some(host => hostname === host || hostname.endsWith('.' + host));
-        } catch (e) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  };
-
-  if (!isValidUrl(displayImage)) {
-    displayImage = "https://placehold.co/400x400?text=No+Image";
-  }
+    "/images/placeholder.svg";
 
   const handleAddToCart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -89,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Link href={`/products/${product.id}`} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full block">
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-white p-4 border-b border-gray-50">
-        <Image
+        <SafeImage
           src={displayImage}
           alt={product.name}
           fill

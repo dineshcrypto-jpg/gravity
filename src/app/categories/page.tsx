@@ -26,10 +26,12 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default async function CategoriesPage() {
   // Fetch categories from Supabase
-  const { data: categories } = await supabase
+  const { data: rawCategories } = await supabase
     .from('categories')
     .select('*')
     .order('name');
+
+  const categories = rawCategories?.filter((cat: Category) => !cat.is_hidden) || [];
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 md:py-20">

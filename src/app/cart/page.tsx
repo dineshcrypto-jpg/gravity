@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { Trash2, ArrowRight, ShoppingBag, Loader2 } from "lucide-react";
@@ -94,8 +94,8 @@ export default function CartPage() {
                     
                     {/* Item Image */}
                     <div className="w-full sm:w-32 aspect-square bg-white border border-gray-100 rounded-2xl relative overflow-hidden flex-shrink-0 p-2">
-                      <Image
-                        src={item.variety.image_url || item.product.image_url || "https://placehold.co/400x400?text=No+Image"}
+                      <SafeImage
+                        src={item.variety.image_url || item.product.image_url}
                         alt={item.product.name}
                         fill
                         className="object-contain p-1"

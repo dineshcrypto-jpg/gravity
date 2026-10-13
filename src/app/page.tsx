@@ -59,12 +59,14 @@ export default async function Home() {
   try {
     const { data } = await supabase
       .from('products')
-      .select('*, varieties(*)')
+      .select('*, varieties(*), categories(*)')
       .limit(60); // fetch more to account for duplicates
     
     if (data && data.length > 0) {
+        // Filter out products belonging to hidden categories
+        const visibleData = data.filter((item: any) => !item.categories?.is_hidden);
         // Take first 8 items after deduplication
-        products = deduplicateProducts(data).slice(0, 8);
+        products = deduplicateProducts(visibleData).slice(0, 8);
       } else {
         products = dummyProducts;
       }

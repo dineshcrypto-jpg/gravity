@@ -5,6 +5,7 @@ CREATE TABLE public.categories (
     slug TEXT NOT NULL UNIQUE,
     icon TEXT, -- e.g., 'Apple', 'Smartphone' (matches our Lucide icons)
     color TEXT, -- e.g., 'bg-green-100 text-green-600'
+    is_hidden BOOLEAN DEFAULT false NOT NULL, -- Set to true to hide this category from the website
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

@@ -4,6 +4,7 @@ export type Category = {
   slug: string;
   icon: string | null;
   color: string | null;
+  is_hidden?: boolean;
   created_at: string;
 };
 

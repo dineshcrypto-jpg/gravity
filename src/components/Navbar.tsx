@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import { useRouter } from "next/navigation";
 import { 
   Search, ShoppingCart, Menu, User, Heart, Sword,
@@ -89,8 +89,9 @@ useEffect(() => {
         }
 
         if (data) {
-          console.log("Categories loaded successfully:", data.length);
-          setCategories(data);
+          const visibleCategories = data.filter((cat: Category) => !cat.is_hidden);
+          console.log("Categories loaded successfully:", visibleCategories.length);
+          setCategories(visibleCategories);
         }
       } catch (err) {
         console.error("Unexpected error in Navbar fetch:", err);
@@ -216,7 +217,7 @@ useEffect(() => {
                     >
                       <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/50">
                         {user.user_metadata.avatar_url ? (
-                          <Image 
+                          <SafeImage 
                             src={user.user_metadata.avatar_url} 
                             alt="User" 
                             width={32} 

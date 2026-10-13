@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
 
 const banners = [
@@ -71,7 +71,7 @@ export default function Hero({ className }: { className?: string }) {
         <div className="flex">
           {banners.map((banner) => (
             <div className="relative flex-[0_0_100%] min-w-0 h-[180px] sm:h-[240px] md:h-[280px] lg:h-[320px]" key={banner.id}>
-              <Image
+              <SafeImage
                 src={banner.image}
                 alt={banner.title}
                 fill

@@ -26,7 +26,7 @@ export default async function Sidebar({ activeSlug }: SidebarProps) {
       .select('*')
       .order('name');
     if (data) {
-      categories = data;
+      categories = data.filter((c: Category) => !c.is_hidden);
     }
   } catch (error) {
     console.error("Error fetching categories for Sidebar:", error);

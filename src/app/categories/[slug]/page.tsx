@@ -21,7 +21,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     .eq('slug', slug)
     .single();
 
-  if (!category) {
+  if (!category || category.is_hidden) {
     notFound();
   }
 

@@ -13,16 +13,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: '**',
       },
-      ...(supabaseHostname ? [{
-        protocol: 'https' as const,
-        hostname: supabaseHostname,
-      }] : []),
       {
-        protocol: 'https',
-        hostname: 'placehold.co',
-      }
+        protocol: 'http',
+        hostname: '**',
+      },
     ],
     dangerouslyAllowSVG: true,
   },
