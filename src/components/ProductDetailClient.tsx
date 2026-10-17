@@ -288,11 +288,12 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <p className="text-xs text-gray-500 font-medium">Quality Guaranteed</p>
               </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <LoginModal 
+    <LoginModal
       isOpen={isLoginModalOpen} 
       onClose={() => setIsLoginModalOpen(false)} 
     />
