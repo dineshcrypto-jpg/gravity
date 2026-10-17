@@ -5,13 +5,15 @@ import { Category } from "@/types/database";
 import { 
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
   ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home as HomeIcon,
-  Search, ShoppingCart, Menu, User, Heart, ChevronRight
+  Search, ShoppingCart, Menu, User, Heart, ChevronRight,
+  Flame, Package, Cpu, Boxes, Layers, Sun
 } from "lucide-react";
 
 const iconMap: Record<string, any> = {
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
   ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home: HomeIcon,
-  Search, ShoppingCart, Menu, User, Heart
+  Search, ShoppingCart, Menu, User, Heart,
+  Flame, Package, Cpu, Boxes, Layers, Sun
 };
 
 interface SidebarProps {

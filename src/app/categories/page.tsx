@@ -2,7 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { 
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2, 
-  ChevronRight, ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home
+  ChevronRight, ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home,
+  Flame, Package, Cpu, Boxes, Layers, Sun
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
@@ -20,7 +21,13 @@ const iconMap: Record<string, React.ElementType> = {
   Cookie,
   PenTool,
   Utensils,
-  Home
+  Home,
+  Flame,
+  Package,
+  Cpu,
+  Boxes,
+  Layers,
+  Sun,
 };
 
 

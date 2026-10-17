@@ -34,9 +34,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Add the cheapest variety to cart by default
+    // Add variety or standard fallback to cart
     if (displayVariety) {
       addToCart(product, displayVariety, 1);
+    } else {
+      addToCart(
+        product,
+        {
+          id: "v1",
+          product_id: product.id,
+          name: "Standard",
+          label: "1x",
+          price: product.price,
+          weight: product.weight || "1 Unit",
+          image_url: product.image_url
+        },
+        1
+      );
     }
   };
 

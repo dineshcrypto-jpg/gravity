@@ -14,7 +14,7 @@ const banners = [
     description: "Daily essentials and premium groceries delivered to your doorstep.",
     image: "/images/banner_groceries.png",
     ctaText: "Shop Groceries",
-    ctaLink: "/categories/groceries-staples"
+    ctaLink: "/categories/cooking-essentials"
   },
   {
     id: 2,

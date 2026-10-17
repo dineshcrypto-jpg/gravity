@@ -12,16 +12,31 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { slug } = await params;
+  const rawSlug = (await params).slug;
+  const decodedSlug = decodeURIComponent(rawSlug || "").trim();
+  const slugWithHyphen = decodedSlug.toLowerCase().replace(/\s+/g, '-');
+  const slugWithSpace = decodedSlug.toLowerCase().replace(/-/g, ' ');
 
-  // 1. Fetch the category info
-  const { data: category } = await supabase
+  // Candidate slugs to support decoded strings, spaces, hyphens, and previous aliases
+  const candidateSlugs = Array.from(new Set([
+    rawSlug,
+    decodedSlug,
+    slugWithHyphen,
+    slugWithSpace,
+    ...(slugWithHyphen.includes('cooking') || slugWithHyphen.includes('groceries') ? ['cooking-essentials', 'cooking essentials', 'groceries-staples', 'groceries'] : []),
+    ...(slugWithHyphen.includes('pooja') || slugWithHyphen.includes('puja') ? ['pooja-essentials', 'pooja items', 'pooja-items', 'pooja-needs'] : []),
+    ...(slugWithHyphen.includes('other') ? ['other-essentials', 'other', 'other-items'] : [])
+  ])).filter(Boolean);
+
+  // 1. Fetch the category info using candidate slugs
+  const { data: matchedCategories } = await supabase
     .from('categories')
     .select('*')
-    .eq('slug', slug)
-    .single();
+    .in('slug', candidateSlugs);
 
-  if (!category || category.is_hidden) {
+  const category = matchedCategories?.find(c => !c.is_hidden);
+
+  if (!category) {
     notFound();
   }
 
@@ -30,7 +45,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     .from('products')
     .select('*, varieties(*)');
     
-  if (slug === 'home-cleaning') {
+  if (category.slug === 'home-cleaning') {
     // If it's home-cleaning, fetch both assigned products and any orphan products (category_id is null)
     query = query.or(`category_id.eq.${category.id},category_id.is.null`);
   } else {

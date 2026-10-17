@@ -8,7 +8,7 @@ import {
   Search, ShoppingCart, Menu, User, Heart, Sword,
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
   ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home as HomeIcon,
-  LogOut, LogIn
+  LogOut, LogIn, Flame, Package, Cpu, Boxes, Layers, Sun
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -36,6 +36,12 @@ const iconMap: Record<string, React.ElementType> = {
   User,
   Heart,
   Sword,
+  Flame,
+  Package,
+  Cpu,
+  Boxes,
+  Layers,
+  Sun,
 };
 
 export default function Navbar() {

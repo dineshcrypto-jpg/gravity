@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
 import DealOfTheDay from "@/components/DealOfTheDay";
@@ -60,16 +61,15 @@ export default async function Home() {
     const { data } = await supabase
       .from('products')
       .select('*, varieties(*), categories(*)')
-      .limit(60); // fetch more to account for duplicates
+      .order('name');
     
     if (data && data.length > 0) {
-        // Filter out products belonging to hidden categories
-        const visibleData = data.filter((item: any) => !item.categories?.is_hidden);
-        // Take first 8 items after deduplication
-        products = deduplicateProducts(visibleData).slice(0, 8);
-      } else {
-        products = dummyProducts;
-      }
+      // Filter out products belonging to hidden categories
+      const visibleData = data.filter((item: any) => !item.categories?.is_hidden);
+      products = deduplicateProducts(visibleData);
+    } else {
+      products = dummyProducts;
+    }
   } catch (error) {
     console.error("Error fetching products:", error);
     products = dummyProducts;
@@ -92,21 +92,21 @@ export default async function Home() {
             </div>
           </div>
           
-          {/* Top Products Section */}
+          {/* Products Section - Showing All Products */}
           <div>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                  Top Products
+                  All Products
                 </h2>
                 <p className="text-gray-500 mt-2 font-medium">
-                  Handpicked premium essentials just for you.
+                  Explore our complete collection across all departments ({products.length} products).
                 </p>
               </div>
-              <button className="text-brand-600 font-bold hover:text-brand-700 transition-colors flex items-center gap-1 group">
-                View All Products
+              <Link href="/categories" className="text-brand-600 font-bold hover:text-brand-700 transition-colors flex items-center gap-1 group">
+                Browse by Department
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </button>
+              </Link>
             </div>
 
             {/* Product Grid */}

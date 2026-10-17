@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getWhatsAppLink, saveOrderToSupabase } from "@/lib/checkout";
 import { useAuth } from "@/context/AuthContext";
+import LoginModal from "@/components/LoginModal";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -25,6 +26,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [selectedVariety, setSelectedVariety] = useState(varieties[0]);
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -38,14 +40,17 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   };
 
   const handleBuyNow = async () => {
+    if (!user) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     let name = "";
     let phone = "";
     let address = "";
     let landmark = "";
 
-    // If logged in, we can pre-fill or try to use their data
-    // For now, we still ask to ensure details are correct for this specific delivery
-    name = prompt("Please enter your Full Name:", user?.user_metadata.full_name || "") || "";
+    name = prompt("Please enter your Full Name:", user?.user_metadata?.full_name || "") || "";
     if (!name) return;
     
     phone = prompt("Please enter your Phone Number:") || "";
@@ -89,7 +94,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
+    <>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
       {/* Success Toast overlay */}
       {showSuccess && (
         <div className="absolute top-4 right-4 md:top-8 md:right-8 bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-2xl shadow-xl z-50 flex flex-col items-center animate-in slide-in-from-top-4 fade-in duration-300">
@@ -282,10 +288,14 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <p className="text-xs text-gray-500 font-medium">Quality Guaranteed</p>
               </div>
             </div>
-          </div>
-
         </div>
       </div>
     </div>
+
+    <LoginModal 
+      isOpen={isLoginModalOpen} 
+      onClose={() => setIsLoginModalOpen(false)} 
+    />
+  </>
   );
 }
