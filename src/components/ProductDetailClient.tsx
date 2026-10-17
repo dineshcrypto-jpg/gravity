@@ -89,10 +89,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     }
   };
 
-
-
-
-
   return (
     <>
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
@@ -288,6 +284,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 <p className="text-xs text-gray-500 font-medium">Quality Guaranteed</p>
               </div>
             </div>
+          </div>
         </div>
       </div>
     </div>
