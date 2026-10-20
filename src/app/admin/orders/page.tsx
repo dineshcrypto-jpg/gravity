@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 import { Loader2, ShoppingBag, Phone, MapPin, Calendar, CheckCircle, Clock } from "lucide-react";
 import { Order, OrderItem } from "@/types/database";
 
-const ADMIN_PASSCODE = "7010364635";
+const ADMIN_PASSCODE = "2218";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -110,12 +111,20 @@ export default function AdminOrdersPage() {
             </h1>
             <p className="text-gray-500 mt-2">Manage and track your customer orders here.</p>
           </div>
-          <button 
-            onClick={fetchOrders}
-            className="px-6 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            Refresh List
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/products"
+              className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-sm"
+            >
+              🎛️ Products
+            </Link>
+            <button 
+              onClick={fetchOrders}
+              className="px-6 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              Refresh List
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

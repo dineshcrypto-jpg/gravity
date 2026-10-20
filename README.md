@@ -4,7 +4,7 @@ Welcome to the **KSN Super Store**! This is a modern e-commerce application buil
 
 ## Features
 - **Storefront**: A beautiful shopping experience for customers.
-- **Admin Dashboard**: Manage orders and inventory at `/admin/orders`.
+- **Admin Dashboard**: Manage orders at `/admin/orders` and full product/category/variety inventory management at `/admin/products`.
 - **Database**: Powered by Supabase for real-time updates and reliability.
 
 ## Getting Started
@@ -53,4 +53,4 @@ This is a Next.js app and needs a Node.js server. The easiest way to deploy is *
 > **Note:** This app CANNOT be deployed to simple shared hosting (GoDaddy, Hostinger, etc.) that only serves static HTML files. It requires a Node.js server.
 
 ## Version
-- **Current Version**: v1.2.8
+- **Current Version**: v1.3.0

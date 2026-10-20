@@ -178,9 +178,9 @@ useEffect(() => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search for groceries, snacks..." 
-                  className="w-full bg-white/20 border border-white/30 text-white placeholder-white/70 text-sm rounded-full focus:ring-2 focus:ring-white focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 block pl-5 pr-12 py-3 transition-all duration-300"
+                  className="w-full bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm rounded-full focus:ring-2 focus:ring-[#008080] focus:border-[#008080] block pl-5 pr-12 py-3 transition-all duration-300 outline-none shadow-sm"
                 />
-                <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-4 text-white hover:scale-110 transition-transform">
+                <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-[#008080] hover:scale-110 transition-all">
                   <Search className="w-5 h-5" />
                 </button>
               </div>
