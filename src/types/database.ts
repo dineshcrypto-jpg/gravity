@@ -30,6 +30,7 @@ export type Variety = {
   price: number;
   weight?: string | null;
   image_url?: string | null;
+  is_in_stock?: boolean;
 };
 
 export type OrderItem = {

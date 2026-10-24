@@ -20,10 +20,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const varieties = product.varieties && product.varieties.length > 0 
     ? product.varieties 
     : [
-        { id: "v1", product_id: product.id, name: "Standard", price: product.price, label: "1x" }
+        { id: "v1", product_id: product.id, name: "Standard", price: product.price, label: "1x", is_in_stock: product.is_in_stock }
       ];
 
-  const [selectedVariety, setSelectedVariety] = useState(varieties[0]);
+  const firstInStock = varieties.find((v) => v.is_in_stock !== false) || varieties[0];
+  const [selectedVariety, setSelectedVariety] = useState(firstInStock);
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -32,6 +33,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const { toggleFavorite, isFavorite } = useFavorites();
   const { user } = useAuth();
   const isFav = isFavorite(product.id);
+
+  const isCurrentInStock = product.is_in_stock && (selectedVariety.is_in_stock !== false);
 
   const handleAddToCart = () => {
     addToCart(product, selectedVariety, quantity);
@@ -122,12 +125,12 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
         {/* Left Side - Image Gallery */}
         <div className="md:w-1/2 p-6 md:p-12 bg-gray-50 flex items-center justify-center relative">
           <div className="absolute top-6 left-6 flex space-x-2 z-10">
-            {!product.is_in_stock && (
+            {!isCurrentInStock && (
               <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
                 Out of Stock
               </span>
             )}
-            {product.is_in_stock && selectedVariety.price < product.price && (
+            {isCurrentInStock && selectedVariety.price < product.price && (
                <span className="bg-brand-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
                  Sale
                </span>
@@ -197,24 +200,38 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Select Variety</h3>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {varieties.map((variety) => (
-                <button
-                  key={variety.id}
-                  onClick={() => setSelectedVariety(variety)}
-                  className={`relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-300 ${
-                    selectedVariety.id === variety.id
-                      ? "border-brand-600 bg-brand-50"
-                      : "border-gray-200 bg-white hover:border-brand-300"
-                  }`}
-                >
-                  <span className={`text-sm font-bold mb-1 ${selectedVariety.id === variety.id ? "text-brand-700" : "text-gray-900"}`}>
-                    {variety.name}
-                  </span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${selectedVariety.id === variety.id ? "bg-brand-200 text-brand-800" : "bg-gray-100 text-gray-500"}`}>
-                    {variety.label}
-                  </span>
-                </button>
-              ))}
+              {varieties.map((variety) => {
+                const isSelected = selectedVariety.id === variety.id;
+                const isVarInStock = variety.is_in_stock !== false;
+                return (
+                  <button
+                    key={variety.id}
+                    onClick={() => setSelectedVariety(variety)}
+                    className={`relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-300 ${
+                      isSelected
+                        ? "border-brand-600 bg-brand-50"
+                        : isVarInStock
+                        ? "border-gray-200 bg-white hover:border-brand-300"
+                        : "border-gray-200 bg-gray-50 opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <span className={`text-sm font-bold mb-1 ${
+                      isSelected ? "text-brand-700" : isVarInStock ? "text-gray-900" : "text-gray-500 line-through"
+                    }`}>
+                      {variety.name}
+                    </span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      isSelected
+                        ? "bg-brand-200 text-brand-800"
+                        : isVarInStock
+                        ? "bg-gray-100 text-gray-500"
+                        : "bg-red-100 text-red-600 font-bold"
+                    }`}>
+                      {isVarInStock ? variety.label : "Out of Stock"}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -238,16 +255,16 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
             <button 
               type="button"
-              disabled={!product.is_in_stock}
+              disabled={!isCurrentInStock}
               onClick={handleAddToCart}
               className={`flex-1 h-14 rounded-full flex items-center justify-center gap-2 font-extrabold text-base md:text-lg transition-all duration-300 shadow-md ${
-                product.is_in_stock 
+                isCurrentInStock 
                   ? "bg-[#008080] text-white hover:bg-[#006666] shadow-[#008080]/30 hover:shadow-lg active:scale-98 cursor-pointer" 
                   : "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
               }`}
             >
               <ShoppingCart className="w-5 h-5" />
-              Add to Cart
+              {isCurrentInStock ? "Add to Cart" : "Out of Stock"}
             </button>
 
             <button 
@@ -262,14 +279,16 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </button>
           </div>
           <button 
-             disabled={!product.is_in_stock}
+             disabled={!isCurrentInStock}
              onClick={handleBuyNow}
              className={`w-full h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
-               product.is_in_stock 
+               isCurrentInStock 
                  ? "bg-gray-900 text-white hover:bg-black shadow-lg transform hover:-translate-y-0.5" 
                  : "hidden"
              }`}
           >
+            Buy Now
+          </button>
             Buy Now
           </button>
 

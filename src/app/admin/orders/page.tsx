@@ -18,7 +18,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const saved = sessionStorage.getItem("admin_auth");
+      const saved = localStorage.getItem("admin_auth") || sessionStorage.getItem("admin_auth") || localStorage.getItem("admin_product_auth");
       if (saved === "true") {
         setIsAuthorized(true);
         await fetchOrders();
@@ -33,11 +33,21 @@ export default function AdminOrdersPage() {
     e.preventDefault();
     if (passcode === ADMIN_PASSCODE) {
       setIsAuthorized(true);
+      localStorage.setItem("admin_auth", "true");
+      localStorage.setItem("admin_product_auth", "true");
       sessionStorage.setItem("admin_auth", "true");
       fetchOrders();
     } else {
       setError("Incorrect Passcode. Access Denied.");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_auth");
+    localStorage.removeItem("admin_product_auth");
+    sessionStorage.removeItem("admin_auth");
+    sessionStorage.removeItem("admin_product_auth");
+    setIsAuthorized(false);
   };
 
   async function fetchOrders() {
@@ -88,7 +98,7 @@ export default function AdminOrdersPage() {
                 placeholder="ENTER THE PASSWORD"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-black outline-none text-center text-lg font-bold tracking-widest transition-all"
+                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-black outline-none text-center text-lg font-bold tracking-widest text-gray-900 placeholder:text-gray-400 transition-all"
               />
             </div>
             {error && <p className="text-red-500 text-xs font-bold uppercase tracking-wider">{error}</p>}
@@ -123,6 +133,13 @@ export default function AdminOrdersPage() {
               className="px-6 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
             >
               Refresh List
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors shadow-sm"
+              title="Lock Admin Dashboard"
+            >
+              🔒 Logout
             </button>
           </div>
         </div>

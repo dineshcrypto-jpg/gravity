@@ -313,7 +313,7 @@ export function expandProductVarietiesForSearch(
           price: v.price || product.price,
           weight: v.weight || product.weight || null,
           imageUrl: v.image_url || product.image_url || "/images/placeholder.svg",
-          isInStock: product.is_in_stock,
+          isInStock: product.is_in_stock && (v.is_in_stock !== false),
           categoryName: product.categories?.name,
           rawProduct: product,
           rawVariety: v

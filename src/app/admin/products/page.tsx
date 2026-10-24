@@ -115,11 +115,12 @@ function ProductFormModal({
         price: 0,
         weight: "",
         image_url: "",
+        is_in_stock: true,
       },
     ]);
   };
 
-  const updateVariety = (index: number, field: keyof Variety, value: string | number) => {
+  const updateVariety = (index: number, field: keyof Variety, value: any) => {
     const updated = [...varieties];
     (updated[index] as any)[field] = value;
     setVarieties(updated);
@@ -172,26 +173,35 @@ function ProductFormModal({
 
         // Upsert existing + insert new
         for (const v of varieties) {
+          const varietyPayload: any = {
+            product_id: product.id,
+            name: v.name,
+            label: v.label,
+            price: v.price,
+            weight: v.weight || null,
+            image_url: v.image_url || null,
+            is_in_stock: v.is_in_stock !== false,
+          };
+
           if (v.id.startsWith("new-")) {
-            await supabase.from("varieties").insert({
-              product_id: product.id,
-              name: v.name,
-              label: v.label,
-              price: v.price,
-              weight: v.weight || null,
-              image_url: v.image_url || null,
-            });
+            const { error: insErr } = await supabase.from("varieties").insert(varietyPayload);
+            if (insErr && (insErr.message?.includes("is_in_stock") || insErr.details?.includes("is_in_stock"))) {
+              delete varietyPayload.is_in_stock;
+              await supabase.from("varieties").insert(varietyPayload);
+            }
           } else {
-            await supabase
+            delete varietyPayload.product_id;
+            const { error: updErr } = await supabase
               .from("varieties")
-              .update({
-                name: v.name,
-                label: v.label,
-                price: v.price,
-                weight: v.weight || null,
-                image_url: v.image_url || null,
-              })
+              .update(varietyPayload)
               .eq("id", v.id);
+            if (updErr && (updErr.message?.includes("is_in_stock") || updErr.details?.includes("is_in_stock"))) {
+              delete varietyPayload.is_in_stock;
+              await supabase
+                .from("varieties")
+                .update(varietyPayload)
+                .eq("id", v.id);
+            }
           }
         }
       } else {
@@ -221,8 +231,13 @@ function ProductFormModal({
             price: v.price,
             weight: v.weight || null,
             image_url: v.image_url || null,
+            is_in_stock: v.is_in_stock !== false,
           }));
-          await supabase.from("varieties").insert(varietyData);
+          const { error: insErr } = await supabase.from("varieties").insert(varietyData);
+          if (insErr && (insErr.message?.includes("is_in_stock") || insErr.details?.includes("is_in_stock"))) {
+            const fallbackData = varietyData.map(({ is_in_stock, ...rest }) => rest);
+            await supabase.from("varieties").insert(fallbackData);
+          }
         }
       }
 
@@ -392,7 +407,30 @@ function ProductFormModal({
                 {varieties.map((v, idx) => (
                   <div key={v.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Variety #{idx + 1}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Variety #{idx + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateVariety(idx, "is_in_stock", v.is_in_stock === false ? true : false)}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                            v.is_in_stock !== false
+                              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                              : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                          }`}
+                        >
+                          {v.is_in_stock !== false ? (
+                            <>
+                              <ToggleRight className="w-4 h-4 text-green-600 shrink-0" />
+                              <span>In Stock</span>
+                            </>
+                          ) : (
+                            <>
+                              <ToggleLeft className="w-4 h-4 text-red-500 shrink-0" />
+                              <span>Out of Stock</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                       <button
                         onClick={() => removeVariety(idx)}
                         className="text-red-400 hover:text-red-600 transition-colors"
@@ -762,7 +800,7 @@ export default function AdminProductsPage() {
 
   // ─── Auth ──────────────────────────────────────────────────────
   useEffect(() => {
-    const saved = sessionStorage.getItem("admin_product_auth");
+    const saved = localStorage.getItem("admin_product_auth") || localStorage.getItem("admin_auth") || sessionStorage.getItem("admin_product_auth");
     if (saved === "true") {
       setIsAuthorized(true);
       fetchData();
@@ -775,11 +813,21 @@ export default function AdminProductsPage() {
     e.preventDefault();
     if (passcode === ADMIN_PRODUCT_PASSCODE) {
       setIsAuthorized(true);
+      localStorage.setItem("admin_product_auth", "true");
+      localStorage.setItem("admin_auth", "true");
       sessionStorage.setItem("admin_product_auth", "true");
       fetchData();
     } else {
       setError("Incorrect Passcode. Access Denied.");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_product_auth");
+    localStorage.removeItem("admin_auth");
+    sessionStorage.removeItem("admin_product_auth");
+    sessionStorage.removeItem("admin_auth");
+    setIsAuthorized(false);
   };
 
   // ─── Data Fetching ─────────────────────────────────────────────
@@ -808,6 +856,31 @@ export default function AdminProductsPage() {
         prev.map((p) => (p.id === product.id ? { ...p, is_in_stock: newStatus } : p))
       );
       showToast(`${product.name} is now ${newStatus ? "In Stock" : "Out of Stock"}`);
+    }
+  };
+
+  const toggleVarietyStock = async (variety: Variety, productId: string) => {
+    const newStatus = variety.is_in_stock === false ? true : false;
+    const { error } = await supabase
+      .from("varieties")
+      .update({ is_in_stock: newStatus })
+      .eq("id", variety.id);
+
+    if (!error) {
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (p.id !== productId) return p;
+          return {
+            ...p,
+            varieties: (p.varieties || []).map((v) =>
+              v.id === variety.id ? { ...v, is_in_stock: newStatus } : v
+            ),
+          };
+        })
+      );
+      showToast(`${variety.label || variety.name} is now ${newStatus ? "In Stock" : "Out of Stock"}`);
+    } else {
+      showToast(`To persist in database, run supabase/add_variety_stock.sql in Supabase SQL editor`, "error");
     }
   };
 
@@ -893,7 +966,7 @@ export default function AdminProductsPage() {
               placeholder="ENTER THE PASSWORD"
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-black outline-none text-center text-lg font-bold tracking-widest transition-all"
+              className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-black outline-none text-center text-lg font-bold tracking-widest text-gray-900 placeholder:text-gray-400 transition-all"
             />
             {error && (
               <p className="text-red-500 text-xs font-bold uppercase tracking-wider">{error}</p>
@@ -948,6 +1021,13 @@ export default function AdminProductsPage() {
             >
               <Plus className="w-4 h-4" />
               Add Product
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors shadow-sm text-sm"
+              title="Lock Admin Dashboard"
+            >
+              🔒 Logout
             </button>
           </div>
         </div>
@@ -1151,13 +1231,39 @@ export default function AdminProductsPage() {
                         {product.varieties.map((v) => (
                           <div
                             key={v.id}
-                            className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs"
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                              v.is_in_stock !== false
+                                ? "bg-white border-gray-200 text-gray-700"
+                                : "bg-red-50 border-red-200 text-red-600"
+                            }`}
                           >
-                            <span className="font-semibold text-gray-700">{v.label || v.name}</span>
+                            <span className="font-semibold">{v.label || v.name}</span>
                             {v.weight && (
                               <span className="text-gray-400">{v.weight}</span>
                             )}
                             <span className="font-bold text-gray-900">₹{v.price.toLocaleString("en-IN")}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleVarietyStock(v, product.id)}
+                              className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 transition-all ${
+                                v.is_in_stock !== false
+                                  ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                  : "bg-red-100 text-red-700 hover:bg-red-200"
+                              }`}
+                              title={v.is_in_stock !== false ? "Click to mark variety Out of Stock" : "Click to mark variety In Stock"}
+                            >
+                              {v.is_in_stock !== false ? (
+                                <>
+                                  <ToggleRight className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                  <span>In Stock</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ToggleLeft className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                  <span>Out</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         ))}
                       </div>

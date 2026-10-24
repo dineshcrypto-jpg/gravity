@@ -46,9 +46,13 @@ export default function DealOfTheDay({ product }: DealOfTheDayProps) {
     return () => clearInterval(timer);
   }, []);
 
-  const displayVariety = product.varieties && product.varieties.length > 0
-    ? [...product.varieties].sort((a, b) => a.price - b.price)[0]
-    : null;
+  const hasInStockVarieties = !product.varieties || product.varieties.length === 0 || product.varieties.some(v => v.is_in_stock !== false);
+  const isInStock = product.is_in_stock && hasInStockVarieties;
+
+  const availableVarieties = product.varieties?.filter(v => v.is_in_stock !== false) || [];
+  const displayVariety = (availableVarieties.length > 0 ? availableVarieties : product.varieties && product.varieties.length > 0 ? product.varieties : [])
+    .slice()
+    .sort((a, b) => a.price - b.price)[0] || null;
 
   const displayPrice = displayVariety ? displayVariety.price : product.price;
   const displayWeight = displayVariety ? displayVariety.weight : product.weight;
@@ -118,7 +122,7 @@ export default function DealOfTheDay({ product }: DealOfTheDayProps) {
             className="object-contain p-1 group-hover:scale-110 transition-transform duration-500"
           />
           
-          {!product.is_in_stock && (
+          {!isInStock && (
             <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center">
               <span className="bg-red-500 text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
                 Out
@@ -165,18 +169,18 @@ export default function DealOfTheDay({ product }: DealOfTheDayProps) {
         {/* Buttons */}
         <div className="flex items-center gap-2">
           <button
-            disabled={!product.is_in_stock}
+            disabled={!isInStock}
             onClick={handleAddToCart}
             onTouchEnd={handleAddToCart}
             className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-              product.is_in_stock
+              isInStock
                 ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)] hover:shadow-[0_6px_16px_rgba(249,115,22,0.5)] transform hover:-translate-y-0.5 touch-manipulation"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
             style={{ pointerEvents: 'auto' }}
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>{product.is_in_stock ? "Add to Cart" : "Out of Stock"}</span>
+            <span>{isInStock ? "Add to Cart" : "Out of Stock"}</span>
           </button>
 
           {/* Badges/Actions Overlay */}

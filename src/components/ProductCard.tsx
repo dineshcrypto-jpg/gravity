@@ -17,10 +17,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const isFav = isFavorite(product.id);
 
-  // Find the cheapest variety to display on the card
-  const displayVariety = product.varieties && product.varieties.length > 0
-    ? [...product.varieties].sort((a, b) => a.price - b.price)[0]
-    : null;
+  // Check if product and its varieties are in stock
+  const hasInStockVarieties = !product.varieties || product.varieties.length === 0 || product.varieties.some(v => v.is_in_stock !== false);
+  const isInStock = product.is_in_stock && hasInStockVarieties;
+
+  // Find the cheapest in-stock variety to display on the card, or fallback to cheapest variety
+  const availableVarieties = product.varieties?.filter(v => v.is_in_stock !== false) || [];
+  const displayVariety = (availableVarieties.length > 0 ? availableVarieties : product.varieties && product.varieties.length > 0 ? product.varieties : [])
+    .slice()
+    .sort((a, b) => a.price - b.price)[0] || null;
 
   const displayPrice = displayVariety ? displayVariety.price : product.price;
   const displayWeight = displayVariety ? displayVariety.weight : product.weight;
@@ -88,7 +93,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
 
-        {!product.is_in_stock && (
+        {!isInStock && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
               Out of Stock
@@ -125,18 +130,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           
           <button 
             type="button"
-            disabled={!product.is_in_stock}
+            disabled={!isInStock}
             onClick={handleAddToCart}
-            aria-label={product.is_in_stock ? `Add ${product.name} to cart` : "Out of stock"}
+            aria-label={isInStock ? `Add ${product.name} to cart` : "Out of stock"}
             className={`px-3 py-2 md:px-4 md:py-2 rounded-xl font-bold text-xs md:text-sm flex items-center gap-1.5 transition-all duration-200 z-20 shadow-sm active:scale-95 cursor-pointer ${
-              product.is_in_stock 
+              isInStock 
                 ? "bg-[#008080] text-white hover:bg-[#006666] hover:shadow-md" 
                 : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
             }`}
             style={{ pointerEvents: 'auto' }}
           >
             <ShoppingCart className="w-4 h-4 shrink-0" />
-            <span>{product.is_in_stock ? "+ Add" : "Out"}</span>
+            <span>{isInStock ? "+ Add" : "Out"}</span>
           </button>
         </div>
       </div>
