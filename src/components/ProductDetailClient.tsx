@@ -289,8 +289,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           >
             Buy Now
           </button>
-            Buy Now
-          </button>
 
           {/* Value Props */}
           <div className="flex justify-center mt-8 pt-8 border-t border-gray-100">
