@@ -6,9 +6,9 @@ import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {

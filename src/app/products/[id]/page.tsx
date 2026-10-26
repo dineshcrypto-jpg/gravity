@@ -56,9 +56,9 @@ const dummyProducts: Product[] = [
 ];
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

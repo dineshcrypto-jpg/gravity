@@ -53,3 +53,13 @@ export type Order = {
   customer_landmark: string | null;
   status: string;
 };
+
+export type Review = {
+  id: string;
+  product_id: string;
+  user_id?: string | null;
+  customer_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+};

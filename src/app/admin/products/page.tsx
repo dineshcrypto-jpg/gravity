@@ -10,8 +10,6 @@ import {
 import { Product, Category, Variety } from "@/types/database";
 import Link from "next/link";
 
-const ADMIN_PRODUCT_PASSCODE = "2218";
-
 // ─── Delete Confirmation Modal ───────────────────────────────────
 function DeleteModal({
   productName,
@@ -800,29 +798,50 @@ export default function AdminProductsPage() {
 
   // ─── Auth ──────────────────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem("admin_product_auth") || localStorage.getItem("admin_auth") || sessionStorage.getItem("admin_product_auth");
-    if (saved === "true") {
-      setIsAuthorized(true);
-      fetchData();
-    } else {
-      setIsLoading(false);
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/admin/auth");
+        const data = await res.json();
+        if (data.authorized) {
+          setIsAuthorized(true);
+          fetchData();
+        } else {
+          setIsLoading(false);
+        }
+      } catch {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === ADMIN_PRODUCT_PASSCODE) {
-      setIsAuthorized(true);
-      localStorage.setItem("admin_product_auth", "true");
-      localStorage.setItem("admin_auth", "true");
-      sessionStorage.setItem("admin_product_auth", "true");
-      fetchData();
-    } else {
-      setError("Incorrect Passcode. Access Denied.");
+    setError("");
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthorized(true);
+        fetchData();
+      } else {
+        setError(data.error || "Incorrect Passcode. Access Denied.");
+      }
+    } catch {
+      setError("An error occurred during authentication.");
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", { method: "DELETE" });
+    } catch (e) {
+      console.error("Logout error", e);
+    }
     localStorage.removeItem("admin_product_auth");
     localStorage.removeItem("admin_auth");
     sessionStorage.removeItem("admin_product_auth");

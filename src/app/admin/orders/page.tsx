@@ -6,8 +6,6 @@ import Link from "next/link";
 import { Loader2, ShoppingBag, Phone, MapPin, Calendar, CheckCircle, Clock } from "lucide-react";
 import { Order, OrderItem } from "@/types/database";
 
-const ADMIN_PASSCODE = "2218";
-
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,31 +16,49 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const saved = localStorage.getItem("admin_auth") || sessionStorage.getItem("admin_auth") || localStorage.getItem("admin_product_auth");
-      if (saved === "true") {
-        setIsAuthorized(true);
-        await fetchOrders();
-      } else {
+      try {
+        const res = await fetch("/api/admin/auth");
+        const data = await res.json();
+        if (data.authorized) {
+          setIsAuthorized(true);
+          await fetchOrders();
+        } else {
+          setIsLoading(false);
+        }
+      } catch {
         setIsLoading(false);
       }
     };
     checkAuth();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === ADMIN_PASSCODE) {
-      setIsAuthorized(true);
-      localStorage.setItem("admin_auth", "true");
-      localStorage.setItem("admin_product_auth", "true");
-      sessionStorage.setItem("admin_auth", "true");
-      fetchOrders();
-    } else {
-      setError("Incorrect Passcode. Access Denied.");
+    setError("");
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthorized(true);
+        fetchOrders();
+      } else {
+        setError(data.error || "Incorrect Passcode. Access Denied.");
+      }
+    } catch {
+      setError("An error occurred during authentication.");
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", { method: "DELETE" });
+    } catch (e) {
+      console.error("Logout error", e);
+    }
     localStorage.removeItem("admin_auth");
     localStorage.removeItem("admin_product_auth");
     sessionStorage.removeItem("admin_auth");
