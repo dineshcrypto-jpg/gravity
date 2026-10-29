@@ -2,6 +2,7 @@ import Link from "next/link";
 import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
 import DealOfTheDay from "@/components/DealOfTheDay";
+import OffersSection from "@/components/OffersSection";
 import { supabase } from "@/lib/supabase";
 import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
@@ -91,6 +92,9 @@ export default async function Home() {
               <DealOfTheDay product={dealProduct} />
             </div>
           </div>
+
+          {/* Customer Special Offers & Freebies */}
+          <OffersSection />
           
           {/* Products Section - Showing All Products */}
           <div>

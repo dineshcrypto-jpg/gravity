@@ -6,7 +6,7 @@ import Link from "next/link";
 import { 
   Heart, ShoppingCart, Share2, Star, ShieldCheck, 
   CheckCircle2, Info, MessageSquare, Send, Check, User,
-  Pencil, Trash2, X, LogIn, Loader2
+  Pencil, Trash2, X, LogIn, Loader2, Gift
 } from "lucide-react";
 import { Product, Review } from "@/types/database";
 import { useCart } from "@/context/CartContext";
@@ -59,6 +59,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const isFav = isFavorite(product.id);
 
   const isCurrentInStock = product.is_in_stock && (selectedVariety.is_in_stock !== false);
+  const activeOffer = selectedVariety.offer || product.offer;
 
   // Fetch genuine customer reviews from Supabase
   useEffect(() => {
@@ -361,7 +362,13 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
           
           {/* Left Side - Image Gallery & Notice */}
           <div className="md:w-1/2 p-6 md:p-12 bg-gray-50 flex flex-col items-center justify-center relative">
-            <div className="absolute top-6 left-6 flex space-x-2 z-10">
+            <div className="absolute top-6 left-6 flex flex-wrap gap-2 z-10">
+              {activeOffer && (
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-md flex items-center gap-1.5 animate-pulse">
+                  <Gift className="w-3.5 h-3.5 shrink-0" />
+                  <span>{activeOffer}</span>
+                </span>
+              )}
               {!isCurrentInStock && (
                 <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
                   Out of Stock
@@ -469,12 +476,29 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               )}
             </div>
 
+            {/* Special Freebie / Offer Banner */}
+            {activeOffer && (
+              <div className="mb-8 p-4 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-300 rounded-2xl flex items-center gap-3.5 shadow-sm animate-in fade-in">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700">
+                    Special Freebie / Offer Available
+                  </div>
+                  <div className="text-sm sm:text-base font-extrabold text-gray-900 truncate">
+                    🎁 {activeOffer}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Variety Picker */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Select Variety</h3>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {varieties.map((variety) => {
                   const isSelected = selectedVariety.id === variety.id;
                   const isVarInStock = variety.is_in_stock !== false;
@@ -482,28 +506,38 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     <button
                       key={variety.id}
                       onClick={() => setSelectedVariety(variety)}
-                      className={`relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-300 ${
+                      className={`relative flex flex-col items-center justify-center p-3.5 rounded-xl border-2 transition-all duration-300 ${
                         isSelected
-                          ? "border-brand-600 bg-brand-50"
+                          ? "border-[#008080] bg-teal-50/50 shadow-sm"
                           : isVarInStock
-                          ? "border-gray-200 bg-white hover:border-brand-300"
+                          ? "border-gray-200 bg-white hover:border-[#008080]/50"
                           : "border-gray-200 bg-gray-50 opacity-60 hover:opacity-100"
                       }`}
                     >
+                      {variety.offer && (
+                        <span className="absolute -top-2.5 -right-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-md flex items-center gap-0.5 z-10 animate-pulse">
+                          <Gift className="w-2.5 h-2.5" /> Freebie
+                        </span>
+                      )}
                       <span className={`text-sm font-bold mb-1 ${
-                        isSelected ? "text-brand-700" : isVarInStock ? "text-gray-900" : "text-gray-500 line-through"
+                        isSelected ? "text-[#008080]" : isVarInStock ? "text-gray-900" : "text-gray-500 line-through"
                       }`}>
                         {variety.name}
                       </span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         isSelected
-                          ? "bg-brand-200 text-brand-800"
+                          ? "bg-teal-100 text-teal-800"
                           : isVarInStock
                           ? "bg-gray-100 text-gray-500"
                           : "bg-red-100 text-red-600 font-bold"
                       }`}>
                         {isVarInStock ? variety.label : "Out of Stock"}
                       </span>
+                      {variety.offer && (
+                        <span className="text-[10px] font-extrabold text-amber-700 mt-1.5 truncate max-w-full bg-amber-100/70 px-1.5 py-0.5 rounded">
+                          🎁 {variety.offer}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

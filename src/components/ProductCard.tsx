@@ -3,7 +3,7 @@
 import React from "react";
 import SafeImage from "@/components/SafeImage";
 import Link from "next/link";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Heart, Gift } from "lucide-react";
 import { Product } from "@/types/database";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useCart } from "@/context/CartContext";
@@ -29,6 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const displayPrice = displayVariety ? displayVariety.price : product.price;
   const displayWeight = displayVariety ? displayVariety.weight : product.weight;
+  const activeOffer = displayVariety?.offer || product.offer;
   
   const displayImage = 
     (displayVariety ? displayVariety.image_url : null) || 
@@ -77,6 +78,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
         />
         
+        {/* Special Offer Badge on Image */}
+        {activeOffer && (
+          <div className="absolute top-3 left-3 z-20">
+            <span className="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-black rounded-lg shadow-md flex items-center gap-1 animate-pulse">
+              <Gift className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate max-w-[130px]">{activeOffer}</span>
+            </span>
+          </div>
+        )}
+
         {/* Badges/Actions Overlay */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
           <button 
@@ -110,6 +121,13 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-gray-500 text-xs md:text-sm line-clamp-2 mb-3 flex-1">
           {product.description}
         </p>
+
+        {activeOffer && (
+          <div className="mb-3 px-2.5 py-1 bg-amber-50 border border-amber-200/90 rounded-xl flex items-center gap-1.5 text-xs font-bold text-amber-900 shadow-2xs">
+            <Gift className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span className="truncate">{activeOffer}</span>
+          </div>
+        )}
         
         <div className="flex items-center justify-between mt-auto">
           <div className="flex flex-col">
