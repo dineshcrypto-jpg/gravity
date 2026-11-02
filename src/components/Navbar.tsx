@@ -8,7 +8,8 @@ import {
   Search, ShoppingCart, Menu, User, Heart, Sword,
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
   ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home as HomeIcon,
-  LogOut, LogIn, Flame, Package, Cpu, Boxes, Layers, Sun
+  LogOut, LogIn, Flame, Package, Cpu, Boxes, Layers, Sun,
+  Phone, Mail, MessageCircle
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -54,8 +55,21 @@ export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isVisible, setIsVisible] = useState(true);
+  const [navToast, setNavToast] = useState<string | null>(null);
   const lastScrollY = React.useRef(0);
   const router = useRouter();
+
+  const handlePhoneClick = (e: React.MouseEvent) => {
+    const isMobile = typeof window !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) {
+      e.preventDefault();
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        navigator.clipboard.writeText("9710149758");
+        setNavToast("Phone 9710149758 copied!");
+        setTimeout(() => setNavToast(null), 3000);
+      }
+    }
+  };
 
 useEffect(() => {
   if (authError) {
@@ -186,7 +200,25 @@ useEffect(() => {
               </div>
             </form>
 
-            <div className="flex items-center space-x-4 md:space-x-6 text-white">
+            <div className="flex items-center space-x-3 md:space-x-5 text-white relative">
+              {/* Toast for Copied on Laptop */}
+              {navToast && (
+                <div className="absolute -bottom-10 right-0 z-50 bg-black text-white text-xs px-3 py-1.5 rounded-xl shadow-lg whitespace-nowrap animate-in fade-in">
+                  ✓ {navToast}
+                </div>
+              )}
+
+              {/* Direct Call Pill */}
+              <a 
+                href="tel:9710149758"
+                onClick={handlePhoneClick}
+                className="hidden xl:flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-3.5 py-2 rounded-full text-xs font-bold transition-all border border-white/20 shadow-xs cursor-pointer"
+                title="Tap to call (mobile) or click to copy (laptop)"
+              >
+                <Phone className="w-3.5 h-3.5 text-yellow-300" />
+                <span>Call: 9710149758</span>
+              </a>
+
               <Link href="/favorites" className="flex flex-col items-center justify-center hover:scale-110 transition-transform relative group">
                 <div className="relative">
                   <Heart className="w-7 h-7" />
@@ -420,6 +452,58 @@ useEffect(() => {
                 </button>
               )}
             </nav>
+          </div>
+
+          {/* Mobile Drawer Direct Contact Section */}
+          <div className="mt-6 pt-6 border-t border-gray-100 pb-4">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#008080] mb-3 px-2">
+              Talk With Us / Help
+            </h3>
+            <div className="space-y-2">
+              <a 
+                href="tel:9710149758"
+                className="flex items-center gap-3 p-3 bg-teal-50/60 rounded-2xl border border-teal-100 text-xs font-bold text-gray-800 hover:bg-teal-50 transition-colors shadow-xs"
+              >
+                <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold">Call Store Directly</p>
+                  <p className="font-extrabold text-teal-900 text-sm">+91 9710149758</p>
+                </div>
+              </a>
+
+              <a 
+                href="https://wa.me/919710149758?text=Hello%20KSN%20Super%20Store%2C%20I%20have%20an%20inquiry"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-green-50/60 rounded-2xl border border-green-100 text-xs font-bold text-gray-800 hover:bg-green-50 transition-colors shadow-xs"
+              >
+                <div className="w-8 h-8 rounded-xl bg-green-600 text-white flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold">WhatsApp Chat</p>
+                  <p className="font-extrabold text-green-900 text-sm">+91 9710149758</p>
+                </div>
+              </a>
+
+              <a 
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=ksnsuperstore1@gmail.com&su=Inquiry%20to%20KSN%20Super%20Store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-200 text-xs font-bold text-gray-800 hover:bg-gray-100 transition-colors shadow-xs"
+                title="Compose in Gmail"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gray-800 text-white flex items-center justify-center shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-gray-400 uppercase font-bold">Compose in Gmail</p>
+                  <p className="font-extrabold text-gray-900 text-xs truncate">ksnsuperstore1@gmail.com</p>
+                </div>
+              </a>
+            </div>
           </div>
         </div>
       </div>

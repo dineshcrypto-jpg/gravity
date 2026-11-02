@@ -98,6 +98,7 @@ function ProductFormModal({
   const [price, setPrice] = useState(parsed?.price?.toString() || "");
   const [weight, setWeight] = useState(parsed?.weight || "");
   const [imageUrl, setImageUrl] = useState(parsed?.image_url || "");
+  const [secondaryImageUrl, setSecondaryImageUrl] = useState(parsed?.secondary_image_url || "");
   const [categoryId, setCategoryId] = useState(parsed?.category_id || categories[0]?.id || "");
   const [offer, setOffer] = useState(parsed?.offer || "");
   const [isInStock, setIsInStock] = useState(parsed?.is_in_stock ?? true);
@@ -167,10 +168,18 @@ function ProductFormModal({
         varieties: varietyOffers,
       };
 
+      const imageMeta = {
+        product_secondary: secondaryImageUrl.trim() || null,
+      };
+
       let finalDescription: string | null = cleanDesc || null;
       if (offerMeta.product || Object.keys(varietyOffers).length > 0) {
         const metaComment = `<!--KSN_OFFERS:${JSON.stringify(offerMeta)}-->`;
         finalDescription = cleanDesc ? `${cleanDesc}\n${metaComment}` : metaComment;
+      }
+      if (imageMeta.product_secondary) {
+        const imgComment = `<!--KSN_IMAGES:${JSON.stringify(imageMeta)}-->`;
+        finalDescription = finalDescription ? `${finalDescription}\n${imgComment}` : imgComment;
       }
 
       if (isEditing && product) {
@@ -181,6 +190,7 @@ function ProductFormModal({
           price: parseFloat(price),
           weight: weight.trim() || null,
           image_url: imageUrl.trim() || null,
+          secondary_image_url: secondaryImageUrl.trim() || null,
           category_id: categoryId,
           is_in_stock: isInStock,
           offer: offer.trim() || null,
@@ -190,6 +200,12 @@ function ProductFormModal({
           .from("products")
           .update(productPayload)
           .eq("id", product.id);
+
+        if (updateErr && updateErr.message?.includes("secondary_image_url")) {
+          delete productPayload.secondary_image_url;
+          const retry = await supabase.from("products").update(productPayload).eq("id", product.id);
+          updateErr = retry.error;
+        }
 
         if (updateErr && (updateErr.message?.includes("offer") || updateErr.details?.includes("offer"))) {
           delete productPayload.offer;
@@ -259,6 +275,7 @@ function ProductFormModal({
           price: parseFloat(price),
           weight: weight.trim() || null,
           image_url: imageUrl.trim() || null,
+          secondary_image_url: secondaryImageUrl.trim() || null,
           category_id: categoryId,
           is_in_stock: isInStock,
           offer: offer.trim() || null,
@@ -269,6 +286,13 @@ function ProductFormModal({
           .insert(newProductPayload)
           .select()
           .single();
+
+        if (insertErr && insertErr.message?.includes("secondary_image_url")) {
+          delete newProductPayload.secondary_image_url;
+          const retry = await supabase.from("products").insert(newProductPayload).select().single();
+          newProduct = retry.data;
+          insertErr = retry.error;
+        }
 
         if (insertErr && (insertErr.message?.includes("offer") || insertErr.details?.includes("offer"))) {
           delete newProductPayload.offer;
@@ -436,7 +460,7 @@ function ProductFormModal({
           {/* Image URL with Preview - Larger & Clear */}
           <div>
             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Product Image URL
+              Product Image URL (Photo 1)
             </label>
             <div className="flex items-center gap-4">
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-white border-2 border-gray-200 shrink-0 flex items-center justify-center shadow-xs p-1">
@@ -451,8 +475,37 @@ function ProductFormModal({
                 type="text"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://... or Supabase storage URL"
+                placeholder="https://... or Supabase storage URL (Photo 1)"
                 className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#008080] outline-none text-gray-900 text-sm font-medium"
+              />
+            </div>
+          </div>
+
+          {/* Secondary Image URL (Photo 2 - For Sarees / Color variants / Back angles) */}
+          <div className="p-4 bg-teal-50/50 rounded-2xl border border-teal-100">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold text-teal-900 uppercase tracking-wider">
+                Photo 2 (Optional - For Sarees / Color Shades / Alternate Direction)
+              </label>
+              <span className="text-[10px] bg-teal-200/70 text-teal-800 font-bold px-2 py-0.5 rounded-full">
+                2-Photo Switcher
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-white border-2 border-teal-200 shrink-0 flex items-center justify-center shadow-xs p-1">
+                <SafeImage
+                  src={secondaryImageUrl}
+                  alt={name ? `${name} Photo 2` : "Photo 2"}
+                  fill
+                  className="object-contain p-1"
+                />
+              </div>
+              <input
+                type="text"
+                value={secondaryImageUrl}
+                onChange={(e) => setSecondaryImageUrl(e.target.value)}
+                placeholder="Photo 2 URL (e.g. dark colour vs white colour, pallu, reverse view)"
+                className="flex-1 px-4 py-3 border-2 border-teal-200 rounded-xl focus:border-[#008080] outline-none text-gray-900 text-sm font-medium bg-white"
               />
             </div>
           </div>

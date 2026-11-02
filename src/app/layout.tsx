@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import PresenceTracker from "@/components/PresenceTracker";
 import { CartProvider } from "@/context/CartContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -38,10 +40,12 @@ export default function RootLayout({
         <AuthProvider>
           <FavoritesProvider>
             <CartProvider>
+              <PresenceTracker />
               <Navbar />
               <div className="flex-1 flex flex-col">
                 {children}
               </div>
+              <Footer />
             </CartProvider>
           </FavoritesProvider>
         </AuthProvider>

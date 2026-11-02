@@ -6,7 +6,7 @@ import Link from "next/link";
 import { 
   Heart, ShoppingCart, Share2, Star, ShieldCheck, 
   CheckCircle2, Info, MessageSquare, Send, Check, User,
-  Pencil, Trash2, X, LogIn, Loader2, Gift
+  Pencil, Trash2, X, LogIn, Loader2, Gift, Phone, Mail, MessageCircle, Copy
 } from "lucide-react";
 import { Product, Review } from "@/types/database";
 import { useCart } from "@/context/CartContext";
@@ -60,6 +60,43 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
   const isCurrentInStock = product.is_in_stock && (selectedVariety.is_in_stock !== false);
   const activeOffer = selectedVariety.offer || product.offer;
+
+  // 2-Photo Support (e.g. Sarees: Dark Color & White Color / 2 Angles)
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const primaryImage = selectedVariety.image_url || product.image_url;
+  const secondaryImage = selectedVariety.secondary_image_url || product.secondary_image_url;
+  const availablePhotos = [primaryImage, secondaryImage].filter((img, idx, arr) => img && arr.indexOf(img) === idx) as string[];
+
+  useEffect(() => {
+    setActivePhotoIdx(0);
+  }, [selectedVariety.id]);
+
+  // Contact Action Helpers (Laptop & Mobile Friendly)
+  const [contactToast, setContactToast] = useState<string | null>(null);
+
+  const handlePhoneAction = (e: React.MouseEvent) => {
+    const isMobile = typeof window !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isMobile) {
+      e.preventDefault();
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        navigator.clipboard.writeText("9710149758");
+        setContactToast("Phone number 9710149758 copied to clipboard!");
+        setTimeout(() => setContactToast(null), 3500);
+      }
+    }
+  };
+
+  const handleEmailAction = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const subject = `Question about ${product.name}`;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=ksnsuperstore1@gmail.com&su=${encodeURIComponent(subject)}`;
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText("ksnsuperstore1@gmail.com");
+      setContactToast("Opening Gmail Compose & copied ksnsuperstore1@gmail.com!");
+      setTimeout(() => setContactToast(null), 3500);
+    }
+    window.open(gmailUrl, "_blank", "noopener,noreferrer");
+  };
 
   // Fetch genuine customer reviews from Supabase
   useEffect(() => {
@@ -384,14 +421,55 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             {/* Product Image */}
             <div className="relative w-full aspect-square max-w-md mx-auto transform transition-all duration-500 hover:scale-105">
               <SafeImage
-                src={selectedVariety.image_url || product.image_url}
-                alt={product.name}
+                src={availablePhotos[activePhotoIdx] || primaryImage}
+                alt={`${product.name} - View ${activePhotoIdx + 1}`}
                 fill
-                className="object-contain animate-in fade-in zoom-in duration-500"
-                key={selectedVariety.id}
+                className="object-contain animate-in fade-in zoom-in duration-300"
+                key={`${selectedVariety.id}-${activePhotoIdx}`}
                 priority
               />
             </div>
+
+            {/* Amazon-style 2-Photo Switcher Thumbnails */}
+            {availablePhotos.length > 1 && (
+              <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
+                <div className="flex items-center gap-3">
+                  {availablePhotos.map((photoUrl, idx) => {
+                    const isActive = activePhotoIdx === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActivePhotoIdx(idx)}
+                        className={`group relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 transition-all p-1 bg-white cursor-pointer ${
+                          isActive
+                            ? "border-[#008080] ring-4 ring-[#008080]/20 scale-105 shadow-md"
+                            : "border-gray-200 hover:border-gray-400 opacity-70 hover:opacity-100"
+                        }`}
+                        title={`View photo ${idx + 1}`}
+                      >
+                        <div className="relative w-full h-full rounded-xl overflow-hidden">
+                          <SafeImage
+                            src={photoUrl}
+                            alt={`${product.name} thumbnail ${idx + 1}`}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                        <span className={`absolute -bottom-2.5 inset-x-2 text-[9px] font-black uppercase tracking-wider py-0.5 rounded-full text-center shadow-xs ${
+                          isActive ? "bg-[#008080] text-white" : "bg-gray-100 text-gray-700 group-hover:bg-gray-200"
+                        }`}>
+                          {idx === 0 ? "Photo 1" : "Photo 2"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] font-semibold text-gray-500 mt-2">
+                  👆 Click photos to switch color / angle view
+                </p>
+              </div>
+            )}
 
             {/* Packaging Batch & Price Notice for Customers */}
             <div className="mt-6 w-full max-w-md bg-amber-50/90 border border-amber-200/90 rounded-2xl p-3.5 flex items-start gap-2.5 shadow-xs text-left">
@@ -599,6 +677,54 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             >
               Buy Now
             </button>
+
+            {/* Direct Contact Before Ordering (Dad Phone & Gmail) */}
+            <div className="mt-5 p-4 bg-teal-50/70 border border-teal-200/80 rounded-2xl relative">
+              {contactToast && (
+                <div className="mb-3 p-2.5 bg-[#008080] text-white text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
+                  <Check className="w-4 h-4 text-emerald-200 shrink-0" />
+                  <span>{contactToast}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 mb-1.5">
+                <Phone className="w-4 h-4 text-[#008080]" />
+                <span className="text-xs font-black uppercase tracking-wider text-teal-950">
+                  Questions before ordering? Talk to us!
+                </span>
+              </div>
+              <p className="text-xs text-teal-800 mb-3">
+                Call or message directly for saree color shades, stock details, or custom delivery in Theni:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <a 
+                  href="tel:9710149758"
+                  onClick={handlePhoneAction}
+                  className="py-2.5 px-3 bg-[#008080] hover:bg-[#006666] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  title="Tap to call on mobile, or click to copy number on laptop"
+                >
+                  <Phone className="w-3.5 h-3.5 text-yellow-300" />
+                  <span>Call / Copy: 9710149758</span>
+                </a>
+                <a 
+                  href={`https://wa.me/919710149758?text=Hello%20KSN%20Super%20Store%2C%20I%20have%20a%20question%20about%20${encodeURIComponent(product.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleEmailAction}
+                  className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                  title="Open directly in Gmail"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Gmail Us</span>
+                </button>
+              </div>
+            </div>
 
             {/* Value Props */}
             <div className="flex justify-center mt-8 pt-8 border-t border-gray-100">

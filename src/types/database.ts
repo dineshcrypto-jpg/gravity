@@ -16,6 +16,7 @@ export type Product = {
   price: number;
   weight?: string | null;
   image_url: string | null;
+  secondary_image_url?: string | null;
   is_in_stock: boolean;
   offer?: string | null;
   created_at: string;
@@ -31,6 +32,7 @@ export type Variety = {
   price: number;
   weight?: string | null;
   image_url?: string | null;
+  secondary_image_url?: string | null;
   is_in_stock?: boolean;
   offer?: string | null;
 };

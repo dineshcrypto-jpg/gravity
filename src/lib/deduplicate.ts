@@ -1,20 +1,23 @@
 import { Product } from "@/types/database";
 
 /**
- * Extracts embedded offer metadata (fallback when DB offer column hasn't been migrated yet)
+ * Extracts embedded offer and secondary image metadata (fallback when DB column hasn't been migrated yet)
  * and cleans product description.
  */
 export function parseProductOffers<T extends Product | null | undefined>(product: T): T {
   if (!product) return product;
 
   let offer = product.offer || null;
+  let secondaryImageUrl = product.secondary_image_url || null;
   let cleanDesc = product.description || "";
   let varietyOffers: Record<string, string> = {};
+  let varietySecondaryImages: Record<string, string> = {};
 
-  const match = cleanDesc.match(/<!--KSN_OFFERS:(.*?)-->/);
-  if (match) {
+  // Check for embedded offers
+  const matchOffer = cleanDesc.match(/<!--KSN_OFFERS:(.*?)-->/);
+  if (matchOffer) {
     try {
-      const parsed = JSON.parse(match[1]);
+      const parsed = JSON.parse(matchOffer[1]);
       if (!offer && parsed.product) {
         offer = parsed.product;
       }
@@ -25,6 +28,21 @@ export function parseProductOffers<T extends Product | null | undefined>(product
     cleanDesc = cleanDesc.replace(/<!--KSN_OFFERS:.*?-->/g, "").trim();
   }
 
+  // Check for embedded secondary images
+  const matchImages = cleanDesc.match(/<!--KSN_IMAGES:(.*?)-->/);
+  if (matchImages) {
+    try {
+      const parsedImages = JSON.parse(matchImages[1]);
+      if (!secondaryImageUrl && parsedImages.product_secondary) {
+        secondaryImageUrl = parsedImages.product_secondary;
+      }
+      if (parsedImages.varieties && typeof parsedImages.varieties === "object") {
+        varietySecondaryImages = parsedImages.varieties;
+      }
+    } catch {}
+    cleanDesc = cleanDesc.replace(/<!--KSN_IMAGES:.*?-->/g, "").trim();
+  }
+
   const updatedVarieties = product.varieties?.map((v) => ({
     ...v,
     offer:
@@ -33,11 +51,19 @@ export function parseProductOffers<T extends Product | null | undefined>(product
       (v.label ? varietyOffers[v.label.trim()] : null) ||
       (v.name ? varietyOffers[v.name.trim()] : null) ||
       null,
+    secondary_image_url:
+      v.secondary_image_url ||
+      varietySecondaryImages[v.id] ||
+      (v.label ? varietySecondaryImages[v.label.trim()] : null) ||
+      (v.name ? varietySecondaryImages[v.name.trim()] : null) ||
+      secondaryImageUrl ||
+      null,
   }));
 
   return {
     ...product,
     offer: offer || null,
+    secondary_image_url: secondaryImageUrl || null,
     description: cleanDesc || null,
     varieties: updatedVarieties,
   } as T;
