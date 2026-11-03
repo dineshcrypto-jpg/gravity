@@ -11,6 +11,9 @@ interface CategoryPageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const rawSlug = (await params).slug;
   const decodedSlug = decodeURIComponent(rawSlug || "").trim();

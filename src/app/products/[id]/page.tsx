@@ -61,6 +61,9 @@ interface ProductPageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
 
