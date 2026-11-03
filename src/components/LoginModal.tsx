@@ -61,8 +61,8 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      setError("Please enter the verification code from your email.");
+    if (!otp.trim() || otp.trim().length !== 8) {
+      setError("Please enter the 8-digit code sent to your email.");
       return;
     }
 
@@ -77,7 +77,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
       }, 1200);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Invalid or expired code. Please enter the correct code or request a new one.");
+      setError(error.message || "Invalid or expired code. Please enter the correct 8-digit code or request a new one.");
     } finally {
       setLoading(false);
     }
@@ -224,17 +224,17 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                 </p>
               </div>
 
-              {/* OTP Code Entry Fallback (Supports 6, 8, or whatever length Supabase generates) */}
+              {/* 8-Digit OTP Code Entry (Choice 2) */}
               <form onSubmit={handleVerifyOtp} className="mb-4 text-left">
                 <div className="bg-teal-50/50 border border-teal-200/80 rounded-2xl p-3.5">
                   <label className="block text-[11px] font-bold text-teal-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <KeyRound className="w-3.5 h-3.5 text-[#008080]" />
-                    <span>Or enter code from email:</span>
+                    <span>Or enter 8-digit code from email:</span>
                   </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      maxLength={10}
+                      maxLength={8}
                       value={otp}
                       onChange={(e) => {
                         setOtp(e.target.value.replace(/\D/g, ""));
@@ -246,7 +246,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                     />
                     <button
                       type="submit"
-                      disabled={loading || otp.trim().length === 0}
+                      disabled={loading || otp.trim().length !== 8}
                       className="px-4 py-2 bg-[#008080] hover:bg-[#006666] text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
                     >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Code"}

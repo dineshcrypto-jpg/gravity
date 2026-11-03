@@ -52,6 +52,7 @@ export default function AdminOrdersPage() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [notificationsAllowed, setNotificationsAllowed] = useState<boolean>(false);
   const [latestNewOrder, setLatestNewOrder] = useState<Order | null>(null);
+  const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
   // Play crisp 2-tone order alert chime via Web Audio API (no external file needed)
   const playAlertChime = () => {
@@ -90,29 +91,83 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const requestNotificationPermission = async () => {
-    if (typeof window !== "undefined" && "Notification" in window) {
+  // Cross-platform notification trigger: uses Service Worker on mobile (Android Chrome) or Desktop Notification API
+  const triggerNotification = async (title: string, body: string) => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    // 1. Service Worker showNotification (Required on Android Chrome)
+    if ("serviceWorker" in navigator) {
       try {
-        const perm = await Notification.requestPermission();
-        setNotificationsAllowed(perm === "granted");
-        playAlertChime();
-        if (perm === "granted") {
-          new Notification("🔔 KSN Super Store Notifications Active!", {
-            body: "You and your dad will now receive instant popups when customers order.",
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            body,
             icon: "/favicon.ico",
-          });
+            badge: "/favicon.ico",
+            vibrate: [200, 100, 200],
+            tag: "ksn-order-alert",
+            renotify: true,
+          } as NotificationOptions);
+          return;
         }
       } catch (err) {
-        console.warn("Notification request error:", err);
+        console.warn("ServiceWorker notification failed:", err);
       }
-    } else {
-      playAlertChime();
+    }
+
+    // 2. Direct Notification (Desktop Safari/Firefox/Chrome)
+    try {
+      new Notification(title, { body, icon: "/favicon.ico" });
+    } catch (err) {
+      console.warn("Standard notification failed:", err);
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    playAlertChime();
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationToast("⚠️ Notifications are not supported in this browser. Please use Chrome on Android or add to Home Screen on iOS.");
+      setTimeout(() => setNotificationToast(null), 5000);
+      return;
+    }
+
+    try {
+      const perm = await Notification.requestPermission();
+      const isGranted = perm === "granted";
+      setNotificationsAllowed(isGranted);
+
+      if (isGranted) {
+        setNotificationToast("🔔 Mobile Popups Enabled! Test alert sent.");
+        setTimeout(() => setNotificationToast(null), 5000);
+
+        if ("serviceWorker" in navigator) {
+          await navigator.serviceWorker.register("/sw.js").catch(() => {});
+        }
+
+        await triggerNotification(
+          "🔔 KSN Super Store Notifications Active!",
+          "You and your dad will now receive instant popups when customers order."
+        );
+      } else {
+        setNotificationToast("⚠️ Notification permission was blocked. Please enable notifications in your browser's site settings.");
+        setTimeout(() => setNotificationToast(null), 6000);
+      }
+    } catch (err) {
+      console.warn("Notification request error:", err);
+      setNotificationToast("⚠️ Could not activate notifications. Check browser permissions.");
+      setTimeout(() => setNotificationToast(null), 5000);
     }
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setNotificationsAllowed(Notification.permission === "granted");
+    if (typeof window !== "undefined") {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("SW registration note:", err));
+      }
+      if ("Notification" in window) {
+        setNotificationsAllowed(Notification.permission === "granted");
+      }
     }
   }, []);
 
@@ -185,15 +240,11 @@ export default function AdminOrdersPage() {
           // Pop-up banner
           setLatestNewOrder(newOrder);
 
-          // Native browser push notification
-          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-            try {
-              new Notification("🚨 NEW CUSTOMER ORDER RECEIVED!", {
-                body: `${newOrder.customer_name} placed an order of ₹${Number(newOrder.total).toLocaleString("en-IN")}`,
-                icon: "/favicon.ico",
-              });
-            } catch {}
-          }
+          // Native browser/mobile push notification via ServiceWorker or Desktop API
+          triggerNotification(
+            "🚨 NEW CUSTOMER ORDER RECEIVED!",
+            `${newOrder.customer_name} placed an order of ₹${Number(newOrder.total).toLocaleString("en-IN")}`
+          );
 
           // Automatically prepend to current orders list
           setOrders((prev) => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
@@ -429,6 +480,19 @@ export default function AdminOrdersPage() {
     <main className="min-h-screen bg-gray-50 py-8 md:py-12">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         
+        {/* Floating Notification Status Toast */}
+        {notificationToast && (
+          <div className="mb-4 p-4 bg-gray-900 text-white rounded-2xl shadow-xl flex items-center justify-between text-xs md:text-sm font-bold animate-in fade-in duration-200">
+            <span>{notificationToast}</span>
+            <button
+              onClick={() => setNotificationToast(null)}
+              className="p-1 hover:text-gray-300 ml-4 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Floating Real-time Order Alert Banner */}
         {latestNewOrder && (
           <div className="mb-6 p-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl shadow-xl flex items-center justify-between animate-in slide-in-from-top duration-300">
