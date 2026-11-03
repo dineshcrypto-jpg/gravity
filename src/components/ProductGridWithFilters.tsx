@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import ProductCard from "@/components/ProductCard";
 import { Product, Category } from "@/types/database";
+import { getExpandedSearchTerms } from "@/lib/search";
 import { 
   SlidersHorizontal, 
   CheckCircle2, 
@@ -12,7 +13,8 @@ import {
   Search, 
   X, 
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Lightbulb
 } from "lucide-react";
 
 interface ProductGridWithFiltersProps {
@@ -74,6 +76,12 @@ export default function ProductGridWithFilters({
     return { total: initialProducts.length, inStock, outStock, offers };
   }, [initialProducts]);
 
+  // Expanded search terms & typo tolerance (matching main search bar)
+  const searchExpansion = useMemo(() => {
+    if (!searchFilter.trim()) return null;
+    return getExpandedSearchTerms(searchFilter.trim());
+  }, [searchFilter]);
+
   // Apply all active filters
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
@@ -98,14 +106,25 @@ export default function ProductGridWithFilters({
       if (priceRange === "100-300" && (price < 100 || price > 300)) return false;
       if (priceRange === "above300" && price <= 300) return false;
 
-      // 5. Search Text Filter
+      // 5. Intelligent Search Filter (matches main search bar synonyms, brands, & varieties)
       if (searchFilter.trim()) {
-        const query = searchFilter.toLowerCase().trim();
-        const matchesName = p.name.toLowerCase().includes(query);
-        const matchesDesc = p.description?.toLowerCase().includes(query) || false;
-        const matchesCat = p.categories?.name?.toLowerCase().includes(query) || false;
-        const matchesVar = p.varieties?.some(v => v.name?.toLowerCase().includes(query) || v.label?.toLowerCase().includes(query)) || false;
-        if (!matchesName && !matchesDesc && !matchesCat && !matchesVar) return false;
+        const tokens = searchExpansion?.searchTokens || [searchFilter.trim().toLowerCase()];
+        const matches = tokens.some((token) => {
+          const t = token.toLowerCase();
+          const matchesName = p.name.toLowerCase().includes(t);
+          const matchesDesc = p.description?.toLowerCase().includes(t) || false;
+          const matchesCat = p.categories?.name?.toLowerCase().includes(t) || false;
+          const matchesOffer = p.offer?.toLowerCase().includes(t) || false;
+          const matchesVar = p.varieties?.some(
+            (v) =>
+              v.name?.toLowerCase().includes(t) ||
+              v.label?.toLowerCase().includes(t) ||
+              v.offer?.toLowerCase().includes(t)
+          ) || false;
+          return matchesName || matchesDesc || matchesCat || matchesOffer || matchesVar;
+        });
+
+        if (!matches) return false;
       }
 
       return true;
@@ -146,23 +165,38 @@ export default function ProductGridWithFilters({
           </p>
         </div>
 
-        {/* Quick Search inside Products */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-            placeholder="Filter by product name..."
-            className="w-full pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 outline-none transition-all shadow-xs"
-          />
-          {searchFilter && (
-            <button
-              onClick={() => setSearchFilter("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+        {/* Quick Search inside Products (Integrated with Main Search Settings) */}
+        <div className="relative w-full md:w-80">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Search for groceries, snacks..."
+              className="w-full pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 outline-none transition-all shadow-xs"
+            />
+            {searchFilter && (
+              <button
+                onClick={() => setSearchFilter("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {searchExpansion?.suggestedCorrection && (
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80">
+              <Lightbulb className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>Did you mean:</span>
+              <button
+                type="button"
+                onClick={() => setSearchFilter(searchExpansion.suggestedCorrection!)}
+                className="font-bold underline text-amber-900 hover:text-[#008080] cursor-pointer"
+              >
+                {searchExpansion.suggestedCorrection}
+              </button>
+            </div>
           )}
         </div>
       </div>

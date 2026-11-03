@@ -2,6 +2,7 @@ import React from "react";
 import { supabase } from "@/lib/supabase";
 import ProductCard from "@/components/ProductCard";
 import SearchItemCardComponent from "@/components/SearchItemCardComponent";
+import SearchResultsClient from "@/components/SearchResultsClient";
 import Sidebar from "@/components/Sidebar";
 import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
@@ -12,6 +13,9 @@ import {
   expandProductVarietiesForSearch,
   SearchItemCard
 } from "@/lib/search";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -153,20 +157,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           {/* Results Grid - Shows All Varieties Individually */}
           {searchItems.length > 0 ? (
             <div className="space-y-12">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#008080]" />
-                    Matching Products & Varieties ({searchItems.length})
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {searchItems.map((item) => (
-                    <SearchItemCardComponent key={item.id} item={item} />
-                  ))}
-                </div>
-              </div>
+              {/* Search Results with Live Stock & Price Filters */}
+              <SearchResultsClient initialItems={searchItems} rawQuery={rawQuery} />
 
               {/* Related / Recommended Section ("Frequently Bought Together") */}
               {relatedProducts.length > 0 && (
