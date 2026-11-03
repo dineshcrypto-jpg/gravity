@@ -62,7 +62,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) {
-      setError("Please enter the 6-digit code.");
+      setError("Please enter the verification code from your email.");
       return;
     }
 
@@ -224,24 +224,24 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                 </p>
               </div>
 
-              {/* 6-Digit OTP Code Entry Fallback */}
+              {/* OTP Code Entry Fallback (Supports 6, 8, or whatever length Supabase generates) */}
               <form onSubmit={handleVerifyOtp} className="mb-4 text-left">
                 <div className="bg-teal-50/50 border border-teal-200/80 rounded-2xl p-3.5">
                   <label className="block text-[11px] font-bold text-teal-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <KeyRound className="w-3.5 h-3.5 text-[#008080]" />
-                    <span>Or enter 6-digit code from email:</span>
+                    <span>Or enter code from email:</span>
                   </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      maxLength={6}
+                      maxLength={10}
                       value={otp}
                       onChange={(e) => {
                         setOtp(e.target.value.replace(/\D/g, ""));
                         if (error) setError(null);
                         if (authError) clearAuthError();
                       }}
-                      placeholder="123456"
+                      placeholder="e.g. 77204140"
                       className="flex-1 px-3 py-2 text-center text-lg font-mono font-bold tracking-widest bg-white border border-teal-200 rounded-xl focus:border-[#008080] outline-none"
                     />
                     <button
