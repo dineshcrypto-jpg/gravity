@@ -26,35 +26,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearAuthError = () => setAuthError(null);
 
   useEffect(() => {
-    // Check active sessions and set the user
+    // 1. Initial active session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user ?? null);
+      }
       setLoading(false);
     });
 
-    // Listen for changes on auth state (logged in, signed out, etc.)
+    // 2. Listen for auth changes (sign-in, token refresh, sign-out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state change event:", event, session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user ?? null);
+      } else if (event === "SIGNED_OUT") {
+        setSession(null);
+        setUser(null);
+      }
       setLoading(false);
     });
 
-    // Parse URL params for errors
+    // 3. Parse URL params for errors or tokens
     if (typeof window !== "undefined") {
       let errorParam: string | null = null;
       let errorDescParam: string | null = null;
 
-      // 1. Check in URL search params (e.g. ?error=...)
+      // Check search params
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.has("error")) {
         errorParam = searchParams.get("error");
         errorDescParam = searchParams.get("error_description");
       }
 
-      // 2. Check in URL hash params (e.g. #error=...)
+      // Check hash params
       if (window.location.hash && !errorParam) {
         const hash = window.location.hash.substring(1);
         const hashParams = new URLSearchParams(hash);
@@ -68,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsedDesc = errorDescParam ? decodeURIComponent(errorDescParam).replace(/\+/g, " ") : null;
         setTimeout(() => setAuthError(parsedDesc || errorParam), 0);
 
-        // Clear error params/hash from history
+        // Clear error params from history cleanly
         const newUrl = window.location.pathname;
         window.history.replaceState(null, "", newUrl);
       }
@@ -79,23 +84,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     setAuthError(null);
+
+    // Determine redirect URL: prioritize NEXT_PUBLIC_SITE_URL if configured, otherwise window.location.origin
+    let redirectUrl: string | undefined = undefined;
+    if (typeof window !== "undefined") {
+      if (process.env.NEXT_PUBLIC_SITE_URL) {
+        redirectUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      } else {
+        redirectUrl = window.location.origin;
+      }
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim(),
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirectUrl,
       },
     });
+
     if (error) throw error;
   };
 
   const verifyOtp = async (email: string, token: string) => {
     setAuthError(null);
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
+    let { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
       token: token.trim(),
       type: "email",
     });
+
+    if (error) {
+      // Fallback attempt with type: 'magiclink'
+      const retry = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: token.trim(),
+        type: "magiclink",
+      });
+      if (!retry.error) {
+        data = retry.data;
+        error = null;
+      }
+    }
+
     if (error) throw error;
+
     if (data.session) {
       setSession(data.session);
       setUser(data.session.user);
@@ -105,6 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setSession(null);
+    setUser(null);
   };
 
   return (

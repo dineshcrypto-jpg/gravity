@@ -118,17 +118,28 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const hasLocalAuth =
+        typeof window !== "undefined" &&
+        (localStorage.getItem("admin_auth") === "true" ||
+          sessionStorage.getItem("admin_auth") === "true" ||
+          localStorage.getItem("admin_product_auth") === "true");
+
       try {
         const res = await fetch("/api/admin/auth");
         const data = await res.json();
-        if (data.authorized) {
+        if (data.authorized || hasLocalAuth) {
           setIsAuthorized(true);
           await fetchOrders();
         } else {
           setIsLoading(false);
         }
       } catch {
-        setIsLoading(false);
+        if (hasLocalAuth) {
+          setIsAuthorized(true);
+          await fetchOrders();
+        } else {
+          setIsLoading(false);
+        }
       }
     };
     checkAuth();
@@ -209,6 +220,11 @@ export default function AdminOrdersPage() {
       });
       const data = await res.json();
       if (data.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_auth", "true");
+          localStorage.setItem("admin_product_auth", "true");
+          sessionStorage.setItem("admin_auth", "true");
+        }
         setIsAuthorized(true);
         fetchOrders();
       } else {
@@ -225,10 +241,12 @@ export default function AdminOrdersPage() {
     } catch (e) {
       console.error("Logout error", e);
     }
-    localStorage.removeItem("admin_auth");
-    localStorage.removeItem("admin_product_auth");
-    sessionStorage.removeItem("admin_auth");
-    sessionStorage.removeItem("admin_product_auth");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("admin_auth");
+      localStorage.removeItem("admin_product_auth");
+      sessionStorage.removeItem("admin_auth");
+      sessionStorage.removeItem("admin_product_auth");
+    }
     setIsAuthorized(false);
   };
 

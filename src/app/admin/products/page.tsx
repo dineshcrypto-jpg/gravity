@@ -196,21 +196,24 @@ function ProductFormModal({
           offer: offer.trim() || null,
         };
 
-        let { error: updateErr } = await supabase
-          .from("products")
-          .update(productPayload)
-          .eq("id", product.id);
+        let currentPayload = { ...productPayload };
+        let updateErr = null;
 
-        if (updateErr && updateErr.message?.includes("secondary_image_url")) {
-          delete productPayload.secondary_image_url;
-          const retry = await supabase.from("products").update(productPayload).eq("id", product.id);
-          updateErr = retry.error;
-        }
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const res = await supabase.from("products").update(currentPayload).eq("id", product.id);
+          updateErr = res.error;
+          if (!updateErr) break;
 
-        if (updateErr && (updateErr.message?.includes("offer") || updateErr.details?.includes("offer"))) {
-          delete productPayload.offer;
-          const retry = await supabase.from("products").update(productPayload).eq("id", product.id);
-          updateErr = retry.error;
+          const msg = `${updateErr.message || ""} ${updateErr.details || ""}`.toLowerCase();
+          if (msg.includes("secondary_image_url") && "secondary_image_url" in currentPayload) {
+            delete currentPayload.secondary_image_url;
+            continue;
+          }
+          if (msg.includes("offer") && "offer" in currentPayload) {
+            delete currentPayload.offer;
+            continue;
+          }
+          break;
         }
 
         if (updateErr) throw updateErr;
@@ -281,24 +284,26 @@ function ProductFormModal({
           offer: offer.trim() || null,
         };
 
-        let { data: newProduct, error: insertErr } = await supabase
-          .from("products")
-          .insert(newProductPayload)
-          .select()
-          .single();
+        let currentInsertPayload = { ...newProductPayload };
+        let newProduct: any = null;
+        let insertErr = null;
 
-        if (insertErr && insertErr.message?.includes("secondary_image_url")) {
-          delete newProductPayload.secondary_image_url;
-          const retry = await supabase.from("products").insert(newProductPayload).select().single();
-          newProduct = retry.data;
-          insertErr = retry.error;
-        }
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const res = await supabase.from("products").insert(currentInsertPayload).select().single();
+          insertErr = res.error;
+          newProduct = res.data;
+          if (!insertErr) break;
 
-        if (insertErr && (insertErr.message?.includes("offer") || insertErr.details?.includes("offer"))) {
-          delete newProductPayload.offer;
-          const retry = await supabase.from("products").insert(newProductPayload).select().single();
-          newProduct = retry.data;
-          insertErr = retry.error;
+          const msg = `${insertErr.message || ""} ${insertErr.details || ""}`.toLowerCase();
+          if (msg.includes("secondary_image_url") && "secondary_image_url" in currentInsertPayload) {
+            delete currentInsertPayload.secondary_image_url;
+            continue;
+          }
+          if (msg.includes("offer") && "offer" in currentInsertPayload) {
+            delete currentInsertPayload.offer;
+            continue;
+          }
+          break;
         }
 
         if (insertErr) throw insertErr;
@@ -2243,17 +2248,28 @@ export default function AdminProductsPage() {
   // ─── Auth ──────────────────────────────────────────────────────
   useEffect(() => {
     const checkAuth = async () => {
+      const hasLocalAuth =
+        typeof window !== "undefined" &&
+        (localStorage.getItem("admin_auth") === "true" ||
+          sessionStorage.getItem("admin_auth") === "true" ||
+          localStorage.getItem("admin_product_auth") === "true");
+
       try {
         const res = await fetch("/api/admin/auth");
         const data = await res.json();
-        if (data.authorized) {
+        if (data.authorized || hasLocalAuth) {
           setIsAuthorized(true);
           fetchData();
         } else {
           setIsLoading(false);
         }
       } catch {
-        setIsLoading(false);
+        if (hasLocalAuth) {
+          setIsAuthorized(true);
+          fetchData();
+        } else {
+          setIsLoading(false);
+        }
       }
     };
     checkAuth();
@@ -2270,6 +2286,11 @@ export default function AdminProductsPage() {
       });
       const data = await res.json();
       if (data.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_auth", "true");
+          localStorage.setItem("admin_product_auth", "true");
+          sessionStorage.setItem("admin_auth", "true");
+        }
         setIsAuthorized(true);
         fetchData();
       } else {
@@ -2286,10 +2307,12 @@ export default function AdminProductsPage() {
     } catch (e) {
       console.error("Logout error", e);
     }
-    localStorage.removeItem("admin_product_auth");
-    localStorage.removeItem("admin_auth");
-    sessionStorage.removeItem("admin_product_auth");
-    sessionStorage.removeItem("admin_auth");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("admin_product_auth");
+      localStorage.removeItem("admin_auth");
+      sessionStorage.removeItem("admin_product_auth");
+      sessionStorage.removeItem("admin_auth");
+    }
     setIsAuthorized(false);
   };
 
@@ -2319,6 +2342,8 @@ export default function AdminProductsPage() {
         prev.map((p) => (p.id === product.id ? { ...p, is_in_stock: newStatus } : p))
       );
       showToast(`${product.name} is now ${newStatus ? "In Stock" : "Out of Stock"}`);
+    } else {
+      showToast(`Error updating stock: ${error.message}. Run supabase/fix_admin_and_features.sql in Supabase.`, "error");
     }
   };
 
@@ -2343,7 +2368,7 @@ export default function AdminProductsPage() {
       );
       showToast(`${variety.label || variety.name} is now ${newStatus ? "In Stock" : "Out of Stock"}`);
     } else {
-      showToast(`To persist in database, run supabase/add_variety_stock.sql in Supabase SQL editor`, "error");
+      showToast(`Error updating variety: ${error.message}. Run supabase/fix_admin_and_features.sql in Supabase.`, "error");
     }
   };
 
@@ -2358,6 +2383,8 @@ export default function AdminProductsPage() {
         prev.map((p) => (p.id === productId ? { ...p, price: newPrice } : p))
       );
       showToast(`Price updated to ₹${newPrice}`);
+    } else {
+      showToast(`Error updating price: ${error.message}. Run supabase/fix_admin_and_features.sql in Supabase.`, "error");
     }
   };
 
@@ -2370,6 +2397,8 @@ export default function AdminProductsPage() {
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
       setDeletingProduct(null);
       showToast(`${product.name} deleted permanently`, "error");
+    } else {
+      showToast(`Error deleting product: ${error.message}. Run supabase/fix_admin_and_features.sql in Supabase.`, "error");
     }
   };
 

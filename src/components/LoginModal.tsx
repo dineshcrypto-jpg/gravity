@@ -218,11 +218,42 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
               </div>
 
               {/* Spam Notice */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 text-left">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-left">
                 <p className="text-xs text-amber-800 leading-relaxed font-medium">
                   💡 <strong>Can&apos;t see it?</strong> Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
                 </p>
               </div>
+
+              {/* 6-Digit OTP Code Entry Fallback */}
+              <form onSubmit={handleVerifyOtp} className="mb-4 text-left">
+                <div className="bg-teal-50/50 border border-teal-200/80 rounded-2xl p-3.5">
+                  <label className="block text-[11px] font-bold text-teal-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-[#008080]" />
+                    <span>Or enter 6-digit code from email:</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, ""));
+                        if (error) setError(null);
+                        if (authError) clearAuthError();
+                      }}
+                      placeholder="123456"
+                      className="flex-1 px-3 py-2 text-center text-lg font-mono font-bold tracking-widest bg-white border border-teal-200 rounded-xl focus:border-[#008080] outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading || otp.trim().length === 0}
+                      className="px-4 py-2 bg-[#008080] hover:bg-[#006666] text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Code"}
+                    </button>
+                  </div>
+                </div>
+              </form>
 
               {activeError && (
                 <p className="text-xs font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100 whitespace-pre-line leading-relaxed mb-4">{activeError}</p>
