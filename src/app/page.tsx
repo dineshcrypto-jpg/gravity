@@ -1,11 +1,10 @@
 import Link from "next/link";
 import Hero from "@/components/Hero";
-import ProductCard from "@/components/ProductCard";
-import DealOfTheDay from "@/components/DealOfTheDay";
 import OffersSection from "@/components/OffersSection";
+import ProductGridWithFilters from "@/components/ProductGridWithFilters";
 import { supabase } from "@/lib/supabase";
 import { deduplicateProducts } from "@/lib/deduplicate";
-import { Product } from "@/types/database";
+import { Product, Category } from "@/types/database";
 
 // Fallback products if the database is empty or not yet set up
 const dummyProducts: Product[] = [
@@ -59,84 +58,76 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Home() {
-  // Fetch real products from Supabase
+  // Fetch real products & categories in parallel from Supabase
   let products: Product[] = [];
+  let categories: Category[] = [];
+
   try {
-    const { data } = await supabase
-      .from('products')
-      .select('*, varieties(*), categories(*)')
-      .order('name');
-    
-    if (data && data.length > 0) {
-      // Filter out products belonging to hidden categories
-      const visibleData = data.filter((item: any) => !item.categories?.is_hidden);
+    const [productsRes, categoriesRes] = await Promise.all([
+      supabase
+        .from('products')
+        .select('*, varieties(*), categories(*)')
+        .order('name'),
+      supabase
+        .from('categories')
+        .select('*')
+        .order('name')
+    ]);
+
+    if (productsRes.data && productsRes.data.length > 0) {
+      const visibleData = productsRes.data.filter((item: any) => !item.categories?.is_hidden);
       products = deduplicateProducts(visibleData);
     } else {
       products = dummyProducts;
     }
+
+    if (categoriesRes.data) {
+      categories = categoriesRes.data.filter((c: Category) => !c.is_hidden);
+    }
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching data:", error);
     products = dummyProducts;
   }
 
-  const dealProduct = products[0] || dummyProducts[0];
-
   return (
-    <main className="min-h-screen bg-gray-50 pb-20 mt-8">
+    <main className="min-h-screen bg-gray-50 pb-20 mt-6">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main feed */}
-        <div className="w-full flex flex-col gap-12">
+        <div className="w-full flex flex-col gap-10">
           
-          {/* Top Banner & Hot Deal Layout Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-            <Hero className="lg:col-span-2 relative w-full mt-6" />
-            <div className="lg:col-span-1 flex items-center justify-center mt-6">
-              <DealOfTheDay product={dealProduct} />
-            </div>
+          {/* Top Banner (Full width without the fake deal card) */}
+          <div className="w-full">
+            <Hero className="w-full relative" />
           </div>
 
           {/* Customer Special Offers & Freebies */}
           <OffersSection />
           
-          {/* Products Section - Showing All Products */}
-          <div>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-              <div>
-                <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                  All Products
-                </h2>
-                <p className="text-gray-500 mt-2 font-medium">
-                  Explore our complete collection across all departments ({products.length} products).
-                </p>
-              </div>
-              <Link href="/categories" className="text-brand-600 font-bold hover:text-brand-700 transition-colors flex items-center gap-1 group">
-                Browse by Department
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </Link>
-            </div>
-
-            {/* Product Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
+          {/* Products Section with Real-Time Stock & Category Filters */}
+          <section id="products-section" className="scroll-mt-8">
+            <ProductGridWithFilters
+              initialProducts={products}
+              categories={categories}
+              title="All Products"
+              subtitle={`Explore our complete store collection (${products.length} products). Filter by stock, offers, category, or price.`}
+              showCategoryFilter={true}
+            />
+          </section>
 
           {/* Trust Badges / Info */}
-          <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-8 text-center mt-4">
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Fast Delivery</h3>
-              <p className="text-gray-500 text-sm">Get your orders delivered within 24 hours.</p>
+              <p className="text-gray-500 text-sm">Get your orders delivered swiftly to your doorstep.</p>
             </div>
             <div className="border-y md:border-y-0 md:border-x border-gray-100 py-8 md:py-0 px-8">
               <h3 className="text-xl font-bold text-gray-900 mb-2">Quality Assured</h3>
-              <p className="text-gray-500 text-sm">Every product is handpicked for quality.</p>
+              <p className="text-gray-500 text-sm">Every product is handpicked with purity and freshness guaranteed.</p>
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Best Prices</h3>
-              <p className="text-gray-500 text-sm">Unbeatable value for all your needs.</p>
+              <p className="text-gray-500 text-sm">Direct wholesale rates and daily savings for your household.</p>
             </div>
           </div>
 

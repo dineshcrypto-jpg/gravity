@@ -2,6 +2,7 @@ import React from "react";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProductCard from "@/components/ProductCard";
+import ProductGridWithFilters from "@/components/ProductGridWithFilters";
 import { deduplicateProducts } from "@/lib/deduplicate";
 import { Product } from "@/types/database";
 
@@ -97,21 +98,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
           </div>
 
-          {/* Product Grid */}
-          {products && products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-              {products.map((product: Product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-3xl p-20 text-center shadow-sm border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">No products found</h2>
-              <p className="text-gray-500">
-                We are currently updating our inventory for {category.name}. Check back soon!
-              </p>
-            </div>
-          )}
+          {/* Product Grid with Filters */}
+          <ProductGridWithFilters
+            initialProducts={products || []}
+            title={`${category.name} Items`}
+            subtitle={`Filter items in this department by stock, offers, or price.`}
+            showCategoryFilter={false}
+          />
 
         </div>
 
