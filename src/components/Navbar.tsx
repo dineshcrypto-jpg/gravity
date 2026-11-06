@@ -16,6 +16,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
+import { sortCategories } from "@/lib/categories";
 import LoginModal from "./LoginModal";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -109,7 +110,7 @@ useEffect(() => {
         }
 
         if (data) {
-          const visibleCategories = data.filter((cat: Category) => !cat.is_hidden);
+          const visibleCategories = sortCategories(data.filter((cat: Category) => !cat.is_hidden));
           console.log("Categories loaded successfully:", visibleCategories.length);
           setCategories(visibleCategories);
         }

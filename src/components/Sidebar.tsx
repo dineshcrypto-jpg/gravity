@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
+import { sortCategories } from "@/lib/categories";
 import { 
   Apple, Smartphone, Shirt, Coffee, Sparkles, Gamepad2,
   ShoppingBasket, Leaf, Cookie, PenTool, Utensils, Home as HomeIcon,
@@ -28,7 +29,7 @@ export default async function Sidebar({ activeSlug }: SidebarProps) {
       .select('*')
       .order('name');
     if (data) {
-      categories = data.filter((c: Category) => !c.is_hidden);
+      categories = sortCategories(data.filter((c: Category) => !c.is_hidden));
     }
   } catch (error) {
     console.error("Error fetching categories for Sidebar:", error);

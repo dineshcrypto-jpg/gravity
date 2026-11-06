@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import ProductCard from "@/components/ProductCard";
 import { Product, Category } from "@/types/database";
+import { sortCategories } from "@/lib/categories";
 import { getExpandedSearchTerms } from "@/lib/search";
 import { 
   SlidersHorizontal, 
@@ -32,6 +33,9 @@ export default function ProductGridWithFilters({
   subtitle,
   showCategoryFilter = true,
 }: ProductGridWithFiltersProps) {
+  // Ordered categories with KSN Specials first and Cooking Essentials second
+  const sortedCategories = useMemo(() => sortCategories(categories), [categories]);
+
   // Filter States
   const [stockFilter, setStockFilter] = useState<"all" | "in_stock" | "out_of_stock">("all");
   const [offerOnly, setOfferOnly] = useState<boolean>(false);
@@ -174,7 +178,7 @@ export default function ProductGridWithFilters({
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Search for groceries, snacks..."
-              className="w-full pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 outline-none transition-all shadow-xs"
+              className="w-full pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 outline-none transition-all shadow-xs"
             />
             {searchFilter && (
               <button
@@ -338,7 +342,7 @@ export default function ProductGridWithFilters({
         </div>
 
         {/* Row 3: Category Pills (if provided and enabled) */}
-        {showCategoryFilter && categories.length > 0 && (
+        {showCategoryFilter && sortedCategories.length > 0 && (
           <div className="pt-2 border-t border-gray-100 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1 shrink-0">
               Department:
@@ -354,7 +358,7 @@ export default function ProductGridWithFilters({
             >
               All Categories
             </button>
-            {categories.map((cat) => (
+            {sortedCategories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"

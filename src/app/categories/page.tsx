@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Category } from "@/types/database";
+import { sortCategories } from "@/lib/categories";
 
 // Mapping icons for display
 const iconMap: Record<string, React.ElementType> = {
@@ -40,7 +41,7 @@ export default async function CategoriesPage() {
     .select('*')
     .order('name');
 
-  const categories = rawCategories?.filter((cat: Category) => !cat.is_hidden) || [];
+  const categories = sortCategories(rawCategories?.filter((cat: Category) => !cat.is_hidden) || []);
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 md:py-20">

@@ -40,6 +40,8 @@ export type Variety = {
 export type OrderItem = {
   product_id?: string;
   product_name: string;
+  variety_id?: string;
+  variety_name?: string;
   variety_label: string;
   quantity: number;
   price: number;

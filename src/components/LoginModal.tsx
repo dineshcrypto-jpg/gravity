@@ -152,7 +152,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                         if (authError) clearAuthError();
                       }}
                       placeholder="name@example.com"
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#008080] focus:bg-white outline-none transition-all text-sm font-medium"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#008080] focus:bg-white outline-none transition-all text-sm font-semibold text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean, onClo
                         if (authError) clearAuthError();
                       }}
                       placeholder="e.g. 77204140"
-                      className="flex-1 px-3 py-2 text-center text-lg font-mono font-bold tracking-widest bg-white border border-teal-200 rounded-xl focus:border-[#008080] outline-none"
+                      className="flex-1 px-3 py-2 text-center text-lg font-mono font-extrabold tracking-widest bg-white text-gray-900 placeholder:text-gray-400 border border-teal-300 rounded-xl focus:border-[#008080] outline-none shadow-xs"
                     />
                     <button
                       type="submit"

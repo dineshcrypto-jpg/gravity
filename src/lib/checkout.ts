@@ -16,6 +16,7 @@ export const saveOrderToSupabase = async (
           product_id: item.product.id,
           product_name: item.product.name,
           variety_id: item.variety.id,
+          variety_name: item.variety.name || "",
           variety_label: item.variety.label,
           price: item.variety.price,
           quantity: item.quantity
@@ -55,7 +56,15 @@ message += `*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n`;
 
   message += `*ITEMS:* \n`;
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.product.name} (${item.variety.label}) x ${item.quantity} = Rs. ${(item.variety.price * item.quantity).toLocaleString("en-IN")}\n`;
+    const varParts: string[] = [];
+    if (item.variety.name && item.variety.name.trim() !== "" && item.variety.name.trim().toLowerCase() !== "standard") {
+      varParts.push(item.variety.name.trim());
+    }
+    if (item.variety.label && item.variety.label.trim() !== "" && !varParts.includes(item.variety.label.trim())) {
+      varParts.push(item.variety.label.trim());
+    }
+    const varietyText = varParts.length > 0 ? ` (${varParts.join(" - ")})` : "";
+    message += `${index + 1}. ${item.product.name}${varietyText} x ${item.quantity} = Rs. ${(item.variety.price * item.quantity).toLocaleString("en-IN")}\n`;
   });
   
   message += `\n*TOTAL AMOUNT: Rs. ${total.toLocaleString("en-IN")}*\n\n`;

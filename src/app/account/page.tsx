@@ -274,9 +274,9 @@ export default function AccountPage() {
                                           {item.product_name}
                                         </p>
                                         <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                                          {item.variety_label && (
-                                            <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-medium">
-                                              {item.variety_label}
+                                          {(item.variety_name || item.variety_label) && (
+                                            <span className="bg-teal-50 text-teal-800 border border-teal-100 px-2 py-0.5 rounded-md font-semibold">
+                                              {[item.variety_name, item.variety_label].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i && v?.toLowerCase() !== "standard").join(" - ") || item.variety_label}
                                             </span>
                                           )}
                                           <span>Qty: {item.quantity}</span>

@@ -4,6 +4,7 @@ import OffersSection from "@/components/OffersSection";
 import ProductGridWithFilters from "@/components/ProductGridWithFilters";
 import { supabase } from "@/lib/supabase";
 import { deduplicateProducts } from "@/lib/deduplicate";
+import { sortCategories } from "@/lib/categories";
 import { Product, Category } from "@/types/database";
 
 // Fallback products if the database is empty or not yet set up
@@ -82,7 +83,7 @@ export default async function Home() {
     }
 
     if (categoriesRes.data) {
-      categories = categoriesRes.data.filter((c: Category) => !c.is_hidden);
+      categories = sortCategories(categoriesRes.data.filter((c: Category) => !c.is_hidden));
     }
   } catch (error) {
     console.error("Error fetching data:", error);

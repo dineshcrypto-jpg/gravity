@@ -7,6 +7,20 @@ export const DEFAULT_OFFERS: Offer[] = [];
 const LOCAL_STORAGE_KEY = "ksn_store_offers_cache";
 
 export async function fetchOffers(): Promise<Offer[]> {
+  // If table was already detected as missing in this session, return cached/empty to avoid console 404 logs
+  if (typeof window !== "undefined" && sessionStorage.getItem("offers_table_missing") === "true") {
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (cached !== null) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((o) => o.id !== "offer-1" && o.id !== "offer-2");
+        }
+      }
+    } catch {}
+    return [];
+  }
+
   // 1. Try fetching from Supabase if table exists
   try {
     const { data, error } = await supabase
@@ -14,7 +28,15 @@ export async function fetchOffers(): Promise<Offer[]> {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && Array.isArray(data)) {
+    if (error) {
+      // Table doesn't exist yet in Supabase (PGRST205)
+      if (typeof window !== "undefined" && (error.code === "PGRST205" || error.message?.includes("Could not find"))) {
+        sessionStorage.setItem("offers_table_missing", "true");
+      }
+    } else if (Array.isArray(data)) {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("offers_table_missing");
+      }
       // Purge any fake sample offers if they exist
       const cleanData = data.filter((o) => o.id !== "offer-1" && o.id !== "offer-2");
       if (typeof window !== "undefined") {
@@ -47,6 +69,9 @@ export async function fetchOffers(): Promise<Offer[]> {
 }
 
 export async function saveOfferToDb(offer: Partial<Offer> & { id?: string }): Promise<Offer> {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("offers_table_missing");
+  }
   // Clean up any fake offers first
   const current = await fetchOffers();
   const existing = offer.id ? current.find((o) => o.id === offer.id) : null;

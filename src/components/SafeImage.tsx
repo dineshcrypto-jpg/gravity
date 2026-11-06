@@ -14,6 +14,8 @@ export default function SafeImage({
   fallbackSrc = FALLBACK_IMAGE,
   alt,
   className,
+  fill,
+  sizes,
   ...props
 }: SafeImageProps) {
   const normalized = normalizeImageUrl(src, fallbackSrc);
@@ -34,9 +36,16 @@ export default function SafeImage({
     }
   };
 
+  // Provide optimal default sizes prop when fill is true to improve performance and eliminate Next.js warnings
+  const effectiveSizes = fill && !sizes
+    ? "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+    : sizes;
+
   return (
     <Image
       {...props}
+      fill={fill}
+      sizes={effectiveSizes}
       src={currentSrc}
       alt={alt || "Product image"}
       className={className}

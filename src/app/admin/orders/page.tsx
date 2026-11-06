@@ -53,6 +53,22 @@ export default function AdminOrdersPage() {
   const [notificationsAllowed, setNotificationsAllowed] = useState<boolean>(false);
   const [latestNewOrder, setLatestNewOrder] = useState<Order | null>(null);
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
+  const [varietiesMap, setVarietiesMap] = useState<Record<string, { name: string; label: string }>>({});
+
+  const formatItemVariety = (item: OrderItem) => {
+    const mapped = item.variety_id ? varietiesMap[item.variety_id] : null;
+    const vName = item.variety_name || mapped?.name || "";
+    const vLabel = item.variety_label || mapped?.label || "";
+
+    const parts: string[] = [];
+    if (vName && vName.trim() !== "" && vName.trim().toLowerCase() !== "standard") {
+      parts.push(vName.trim());
+    }
+    if (vLabel && vLabel.trim() !== "" && !parts.includes(vLabel.trim())) {
+      parts.push(vLabel.trim());
+    }
+    return parts.join(" - ") || item.variety_label || "";
+  };
 
   // Play crisp 2-tone order alert chime via Web Audio API (no external file needed)
   const playAlertChime = () => {
@@ -61,6 +77,9 @@ export default function AdminOrdersPage() {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
       const now = ctx.currentTime;
 
       // Tone 1: High crisp ding (D5 - 587Hz)
@@ -250,10 +269,47 @@ export default function AdminOrdersPage() {
           setOrders((prev) => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR") {
+          console.warn("Realtime order subscription notice:", err);
+        }
+      });
+
+    // 3. Resilient Polling Fallback: checks every 10 seconds so orders are NEVER missed even if Realtime is suspended
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (data && data.length > 0) {
+          setOrders((prev) => {
+            if (prev.length === 0) return data;
+            const existingIds = new Set(prev.map((o) => o.id));
+            const newOrders = data.filter((o) => !existingIds.has(o.id));
+            if (newOrders.length > 0) {
+              const newest = newOrders[0];
+              playAlertChime();
+              setLatestNewOrder(newest);
+              triggerNotification(
+                "🚨 NEW CUSTOMER ORDER RECEIVED!",
+                `${newest.customer_name} placed an order of ₹${Number(newest.total).toLocaleString("en-IN")}`
+              );
+              return [...newOrders, ...prev];
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.warn("Order poll fallback error:", err);
+      }
+    }, 10000);
 
     return () => {
       window.removeEventListener("ksn_presence_sync", handlePresenceSync);
+      clearInterval(pollInterval);
       try {
         supabase.removeChannel(ordersChannel);
       } catch {}
@@ -303,15 +359,28 @@ export default function AdminOrdersPage() {
 
   async function fetchOrders() {
     setIsLoading(true);
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const [ordersRes, varietiesRes] = await Promise.all([
+        supabase.from('orders').select('*').order('created_at', { ascending: false }),
+        supabase.from('varieties').select('id, name, label')
+      ]);
 
-    if (data) {
-      setOrders(data);
+      if (varietiesRes.data) {
+        const vMap: Record<string, { name: string; label: string }> = {};
+        varietiesRes.data.forEach((v: any) => {
+          vMap[v.id] = { name: v.name, label: v.label };
+        });
+        setVarietiesMap(vMap);
+      }
+
+      if (ordersRes.data) {
+        setOrders(ordersRes.data);
+      }
+    } catch (e) {
+      console.warn("fetchOrders error:", e);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   async function updateStatus(orderId: string, newStatus: string) {
@@ -708,7 +777,7 @@ export default function AdminOrdersPage() {
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
                   placeholder="Search orders by customer name, phone, order ID..."
-                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-black outline-none"
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-black outline-none font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -875,15 +944,23 @@ export default function AdminOrdersPage() {
                       <div className="mb-6">
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Items</h4>
                         <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
-                          {selectedOrder.items.map((item: OrderItem, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 text-sm">
-                              <div className="flex-1 pr-2">
-                                <p className="font-semibold text-gray-900 line-clamp-1">{item.product_name}</p>
-                                <p className="text-xs text-gray-500">{item.variety_label} × {item.quantity}</p>
+                          {selectedOrder.items.map((item: OrderItem, idx: number) => {
+                            const varietyText = formatItemVariety(item);
+                            return (
+                              <div key={idx} className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0 text-sm">
+                                <div className="flex-1 pr-2">
+                                  <p className="font-bold text-gray-900 leading-snug">{item.product_name}</p>
+                                  {varietyText && (
+                                    <p className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md inline-block mt-1 border border-teal-100">
+                                      Variety: {varietyText}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-gray-500 mt-0.5 font-medium">Qty: {item.quantity} × ₹{item.price}</p>
+                                </div>
+                                <span className="font-extrabold text-gray-900">₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
                               </div>
-                              <span className="font-bold text-gray-900">₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -936,7 +1013,7 @@ export default function AdminOrdersPage() {
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   placeholder="Search customers by name, phone, customer ID or address..."
-                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-[#008080] outline-none"
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-[#008080] outline-none font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                 />
               </div>
 
@@ -1163,13 +1240,18 @@ export default function AdminOrdersPage() {
                                 <span className="font-extrabold text-gray-900">₹{(Number(ord.total) || 0).toLocaleString("en-IN")}</span>
                               </div>
 
-                              <div className="space-y-1 text-xs text-gray-600 bg-gray-50 p-2 rounded-xl">
-                                {ord.items.map((it, idx) => (
-                                  <div key={idx} className="flex justify-between items-center">
-                                    <span className="line-clamp-1">{it.product_name} ({it.variety_label}) × {it.quantity}</span>
-                                    <span className="font-semibold text-gray-900 ml-2">₹{(it.price * it.quantity).toLocaleString("en-IN")}</span>
-                                  </div>
-                                ))}
+                              <div className="space-y-1.5 text-xs text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                                {ord.items.map((it, idx) => {
+                                  const varietyText = formatItemVariety(it);
+                                  return (
+                                    <div key={idx} className="flex justify-between items-center gap-2">
+                                      <span className="line-clamp-1 font-medium text-gray-900">
+                                        {it.product_name} {varietyText ? `(${varietyText})` : ""} × {it.quantity}
+                                      </span>
+                                      <span className="font-extrabold text-gray-900 shrink-0">₹{(it.price * it.quantity).toLocaleString("en-IN")}</span>
+                                    </div>
+                                  );
+                                })}
                               </div>
 
                               {/* Quick status change */}

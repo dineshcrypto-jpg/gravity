@@ -7,6 +7,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    lock: async (name, acquireTimeout, fn) => {
+      // Prevents orphaned lock warnings from browser reloads / React StrictMode
+      return fn();
+    }
   }
 })

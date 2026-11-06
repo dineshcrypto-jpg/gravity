@@ -224,7 +224,7 @@ export default function CartPage() {
                       value={customerInfo.name}
                       onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
                       placeholder="Enter your name"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                     />
                   </div>
 
@@ -235,7 +235,7 @@ export default function CartPage() {
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
                       placeholder="Enter contact number"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                     />
                   </div>
 
@@ -246,7 +246,7 @@ export default function CartPage() {
                       value={customerInfo.address}
                       onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
                       placeholder="Address details"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                     />
                   </div>
 
@@ -257,7 +257,7 @@ export default function CartPage() {
                       value={customerInfo.landmark}
                       onChange={(e) => setCustomerInfo({...customerInfo, landmark: e.target.value})}
                       placeholder="e.g. Near Bus Stand"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#008080] bg-white outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-xs"
                     />
                   </div>
                 </div>
