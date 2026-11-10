@@ -31,7 +31,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const firstInStock = varieties.find((v) => v.is_in_stock !== false) || varieties[0];
   const [selectedVariety, setSelectedVariety] = useState(firstInStock);
   const [quantity, setQuantity] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -146,8 +145,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
   const handleAddToCart = () => {
     addToCart(product, selectedVariety, quantity);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const handleBuyNow = async () => {
@@ -370,31 +367,6 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   return (
     <>
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
-        {/* Floating Success Toast */}
-        {showSuccess && (
-          <div className="absolute top-4 right-4 md:top-8 md:right-8 bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-2xl shadow-xl z-50 flex flex-col items-center animate-in slide-in-from-top-4 fade-in duration-300">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-              <span className="font-bold">Added to Cart!</span>
-            </div>
-            <p className="text-sm text-green-600 mb-3">{quantity}x {product.name} ({selectedVariety.name})</p>
-            <div className="flex gap-2">
-              <Link 
-                href={product.categories ? `/categories/${product.categories.slug}` : "/categories"} 
-                className="px-4 py-2 bg-white rounded-xl text-xs font-bold text-green-700 border border-green-200 hover:bg-green-100"
-              >
-                Continue Shopping
-              </Link>
-              <Link 
-                href="/cart" 
-                className="px-4 py-2 bg-green-600 rounded-xl text-xs font-bold text-white hover:bg-green-700"
-              >
-                View Cart
-              </Link>
-            </div>
-          </div>
-        )}
-
         <div className="flex flex-col md:flex-row">
           
           {/* Left Side - Image Gallery & Notice */}

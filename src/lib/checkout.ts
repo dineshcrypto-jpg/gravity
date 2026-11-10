@@ -32,6 +32,22 @@ export const saveOrderToSupabase = async (
       .single();
 
     if (error) throw error;
+
+    // Trigger Web Push Notification to Admin Phones (wakes mobile even when browser is closed)
+    try {
+      fetch('/api/admin/push/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: '🛍️ New Order Received!',
+          body: `Order from ${customerInfo.name || "Customer"} for ₹${total}`,
+          url: '/admin/orders'
+        })
+      }).catch((e) => console.warn("Push trigger notice:", e));
+    } catch (pushErr) {
+      console.warn("Background push dispatch notice:", pushErr);
+    }
+
     return data;
   } catch (err: unknown) {
     const error = err as Error;

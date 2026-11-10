@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product } from "@/types/database";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "./ToastContext";
 
 type FavoritesContextType = {
   favorites: Product[];
@@ -16,6 +17,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -82,8 +84,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     // Update local state immediately for UI responsiveness
     if (exists) {
       setFavorites(prev => prev.filter(p => p.id !== product.id));
+      showToast({
+        type: "favorite_remove",
+        title: "Removed from Favorites",
+        subtitle: product.name,
+      });
     } else {
       setFavorites(prev => [...prev, product]);
+      showToast({
+        type: "favorite_add",
+        title: "Added to Favorites!",
+        subtitle: product.name,
+      });
     }
 
     // Sync with DB if logged in

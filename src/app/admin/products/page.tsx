@@ -12,6 +12,7 @@ import { Product, Category, Variety, Offer } from "@/types/database";
 import SafeImage from "@/components/SafeImage";
 import { fetchOffers, saveOfferToDb, deleteOfferFromDb } from "@/lib/offers";
 import { parseProductOffers } from "@/lib/deduplicate";
+import { getExpandedSearchTerms } from "@/lib/search";
 import Link from "next/link";
 
 // ─── Delete Confirmation Modal ───────────────────────────────────
@@ -447,14 +448,15 @@ function ProductFormModal({
           {/* Size / Pack & In-Stock toggle */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                Pack / Size (Optional)
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>Weight / Size (Optional)</span>
+                <span className="text-[10px] text-teal-700 font-bold lowercase bg-teal-50 px-1.5 py-0.5 rounded">e.g. 500g, 1kg</span>
               </label>
               <input
                 type="text"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                placeholder="e.g. 200g + 200g, 500g, 1 Liter, 1 Piece"
+                placeholder="e.g. 500g, 1kg, 250ml, 1 Liter, 1 Piece"
                 className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-[#008080] outline-none text-gray-900 font-medium shadow-xs placeholder:text-gray-400"
               />
             </div>
@@ -567,9 +569,9 @@ function ProductFormModal({
                   const isDetailsOpen = !!openVarietyDetails[v.id];
                   return (
                     <div key={v.id} className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs space-y-2.5">
-                      {/* Variety Quick Row: Name, Price, Stock Switch, Delete */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <div className="flex-1">
+                      {/* Variety Quick Row: Name, Weight, Price, Stock Switch, Delete */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                        <div className="flex-1 min-w-[130px]">
                           <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
                             Flavor / Size Name
                           </label>
@@ -583,12 +585,25 @@ function ProductFormModal({
                                 updateVariety(idx, "label", val);
                               }
                             }}
-                            placeholder="e.g. Orange Bite, 500g Pouch, 1 Liter Bottle"
+                            placeholder="e.g. Orange Bite, Family Pack"
                             className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 font-semibold focus:border-[#008080] focus:bg-white outline-none"
                           />
                         </div>
 
-                        <div className="w-full sm:w-32">
+                        <div className="w-full sm:w-28">
+                          <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
+                            Weight
+                          </label>
+                          <input
+                            type="text"
+                            value={v.weight || ""}
+                            onChange={(e) => updateVariety(idx, "weight", e.target.value)}
+                            placeholder="e.g. 500g, 1kg"
+                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 font-medium focus:border-[#008080] focus:bg-white outline-none"
+                          />
+                        </div>
+
+                        <div className="w-full sm:w-28">
                           <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
                             Price (₹)
                           </label>
@@ -2476,15 +2491,35 @@ export default function AdminProductsPage() {
   };
 
   // ─── Filtering & Sorting ──────────────────────────────────────
+  const trimmedSearch = searchQuery.trim();
+  const searchTermsInfo = trimmedSearch ? getExpandedSearchTerms(trimmedSearch) : null;
+  const rawQueryLower = trimmedSearch.toLowerCase();
+  const queryTokens = rawQueryLower.split(/\s+/).filter(Boolean);
+
   const filteredProducts = products
     .filter((p) => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (
-          !p.name.toLowerCase().includes(q) &&
-          !(p.description || "").toLowerCase().includes(q)
-        )
+      if (trimmedSearch) {
+        const catName =
+          (p as any).categories?.name ||
+          categories.find((c) => c.id === p.category_id)?.name ||
+          "";
+        const varietyText = (p.varieties || [])
+          .map((v) => `${v.name} ${v.label || ""} ${v.weight || ""} ${v.offer || ""}`)
+          .join(" ");
+
+        const combinedText = `${p.name} ${p.description || ""} ${p.weight || ""} ${p.offer || ""} ${catName} ${varietyText}`.toLowerCase();
+
+        // 1. Direct multi-word check: all typed words must appear somewhere in the product info
+        const allWordsMatch = queryTokens.length > 0 && queryTokens.every((word) => combinedText.includes(word));
+
+        // 2. Expanded synonyms, typo-corrections, and brand/Tamil terms check
+        const synonymMatch =
+          searchTermsInfo &&
+          searchTermsInfo.searchTokens.some((token) => combinedText.includes(token.toLowerCase()));
+
+        if (!allWordsMatch && !synonymMatch) {
           return false;
+        }
       }
       if (filterCategory !== "all" && p.category_id !== filterCategory) return false;
       if (filterStock === "in" && !p.is_in_stock) return false;
@@ -2631,16 +2666,26 @@ export default function AdminProductsPage() {
         {/* ─── Filters & Search ────────────────────────────── */}
         <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Search - matching website style */}
+            {/* Search - Upgraded smart search */}
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products by name or description..."
-                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 text-gray-900 placeholder-gray-400 rounded-full outline-none focus:ring-2 focus:ring-[#008080] focus:border-[#008080] transition-all shadow-sm"
+                placeholder="Search by name, variety, weight (e.g. 500g), category, brand..."
+                className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 text-gray-900 placeholder-gray-400 rounded-full outline-none focus:ring-2 focus:ring-[#008080] focus:border-[#008080] transition-all shadow-sm text-sm"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Category Filter */}
@@ -2700,9 +2745,25 @@ export default function AdminProductsPage() {
         </div>
 
         {/* ─── Results Count ───────────────────────────────── */}
-        <p className="text-sm text-gray-400 font-medium mb-4 px-1">
-          Showing {filteredProducts.length} of {products.length} products
-        </p>
+        <div className="flex items-center justify-between text-sm text-gray-500 font-medium mb-4 px-1">
+          <p>
+            Showing <strong className="text-gray-900 font-bold">{filteredProducts.length}</strong> of {products.length} products
+            {trimmedSearch && (
+              <span className="ml-1.5 text-[#008080] font-semibold">
+                matching &ldquo;{trimmedSearch}&rdquo;
+              </span>
+            )}
+          </p>
+          {trimmedSearch && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="text-xs text-[#008080] hover:underline font-bold cursor-pointer"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
 
         {/* ─── Products List ───────────────────────────────── */}
         {filteredProducts.length === 0 ? (
@@ -2710,6 +2771,15 @@ export default function AdminProductsPage() {
             <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-900">No products found</h3>
             <p className="text-gray-500 mt-1">Try changing your search or filters.</p>
+            {trimmedSearch && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Reset search
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

@@ -143,6 +143,46 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Helper to convert base64 VAPID key to Uint8Array for PushManager
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const registerPushSubscription = async (reg: ServiceWorkerRegistration) => {
+    try {
+      const pubKey =
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+        "BBhOWcAk-M9wOAyN4UsmVm7PSDrGdl4bO6810nxNghx8UJKOFrSTBCfw1bPRygvxuCa2BTDmb68hcEYcbtg6Mr0";
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(pubKey),
+        });
+      }
+
+      if (sub) {
+        await fetch("/api/admin/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub.toJSON() }),
+        });
+      }
+      return sub;
+    } catch (err) {
+      console.warn("Push subscription registration note:", err);
+      return null;
+    }
+  };
+
   const requestNotificationPermission = async () => {
     playAlertChime();
     if (typeof window === "undefined" || !("Notification" in window)) {
@@ -157,17 +197,27 @@ export default function AdminOrdersPage() {
       setNotificationsAllowed(isGranted);
 
       if (isGranted) {
-        setNotificationToast("🔔 Mobile Popups Enabled! Test alert sent.");
-        setTimeout(() => setNotificationToast(null), 5000);
+        setNotificationToast("🔔 Connecting Web Push for background & lockscreen alerts...");
 
+        let reg: ServiceWorkerRegistration | null = null;
         if ("serviceWorker" in navigator) {
-          await navigator.serviceWorker.register("/sw.js").catch(() => {});
+          reg = await navigator.serviceWorker.register("/sw.js").catch(() => null);
+          if (!reg) reg = await navigator.serviceWorker.ready.catch(() => null);
         }
 
-        await triggerNotification(
-          "🔔 KSN Super Store Notifications Active!",
-          "You and your dad will now receive instant popups when customers order."
-        );
+        if (reg && "pushManager" in reg) {
+          await registerPushSubscription(reg);
+          // Send instant test push via server to verify background delivery
+          fetch("/api/admin/push/test", { method: "POST" }).catch(() => {});
+          setNotificationToast("🔔 Lockscreen Alerts Active! Test push alert sent to your device.");
+        } else {
+          setNotificationToast("🔔 In-browser Notifications Active! Test alert sent.");
+          await triggerNotification(
+            "🔔 KSN Super Store Notifications Active!",
+            "You will now receive alerts when customers order."
+          );
+        }
+        setTimeout(() => setNotificationToast(null), 6000);
       } else {
         setNotificationToast("⚠️ Notification permission was blocked. Please enable notifications in your browser's site settings.");
         setTimeout(() => setNotificationToast(null), 6000);
@@ -182,7 +232,11 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js").catch((err) => console.warn("SW registration note:", err));
+        navigator.serviceWorker.register("/sw.js").then(async (reg) => {
+          if (Notification.permission === "granted" && "pushManager" in reg) {
+            await registerPushSubscription(reg);
+          }
+        }).catch((err) => console.warn("SW registration note:", err));
       }
       if ("Notification" in window) {
         setNotificationsAllowed(Notification.permission === "granted");
@@ -627,18 +681,22 @@ export default function AdminOrdersPage() {
               <span>{soundEnabled ? "Order Sound ON" : "Order Sound MUTED"}</span>
             </button>
 
-            {/* Browser Push Notification Permission */}
+            {/* Browser & Mobile Web Push Notification Permission */}
             <button
               onClick={requestNotificationPermission}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-sm ${
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-sm cursor-pointer ${
                 notificationsAllowed
-                  ? "bg-teal-50 text-teal-800 border border-teal-200"
+                  ? "bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100"
                   : "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100"
               }`}
-              title="Receive popup notifications on mobile/desktop"
+              title={
+                notificationsAllowed
+                  ? "Background push alerts enabled. Click to send a test alert to your phone."
+                  : "Click to enable background lockscreen alerts when orders arrive."
+              }
             >
               <Bell className="w-4 h-4 text-[#008080]" />
-              <span>{notificationsAllowed ? "Mobile Alerts Active" : "Enable Mobile Popups"}</span>
+              <span>{notificationsAllowed ? "Lockscreen Alerts Active (Test)" : "Enable Mobile Alerts"}</span>
             </button>
 
             <Link

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from "react";
 import { Product, Variety } from "@/types/database";
+import { useToast } from "./ToastContext";
 
 export type CartItem = {
   product: Product;
@@ -22,6 +23,7 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -63,6 +65,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       }
       return [...prev, { product, variety, quantity }];
+    });
+
+    const varietyLabel = variety.label || variety.name || variety.weight || "";
+    const detail = varietyLabel && varietyLabel !== "Standard" && varietyLabel !== "1x"
+      ? `${product.name} • ${varietyLabel}`
+      : product.name;
+
+    showToast({
+      type: "cart",
+      title: "Added to Cart!",
+      subtitle: detail,
     });
   };
 

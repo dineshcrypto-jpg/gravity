@@ -7,6 +7,7 @@ import PresenceTracker from "@/components/PresenceTracker";
 import { CartProvider } from "@/context/CartContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,16 +39,18 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-gray-50 text-gray-900">
         <AuthProvider>
-          <FavoritesProvider>
-            <CartProvider>
-              <PresenceTracker />
-              <Navbar />
-              <div className="flex-1 flex flex-col">
-                {children}
-              </div>
-              <Footer />
-            </CartProvider>
-          </FavoritesProvider>
+          <ToastProvider>
+            <FavoritesProvider>
+              <CartProvider>
+                <PresenceTracker />
+                <Navbar />
+                <div className="flex-1 flex flex-col">
+                  {children}
+                </div>
+                <Footer />
+              </CartProvider>
+            </FavoritesProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
