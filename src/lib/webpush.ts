@@ -238,7 +238,7 @@ export async function sendWebPush(
         "Content-Type": "application/octet-stream",
         "Content-Length": String(encryptedBody.length),
       },
-      body: encryptedBody,
+      body: new Uint8Array(encryptedBody) as BodyInit,
     });
 
     if (res.status === 201 || res.status === 200) {
