@@ -250,11 +250,11 @@ function ProductFormModal({
         for (const v of varieties) {
           const varietyPayload: any = {
             product_id: product.id,
-            name: v.name,
-            label: v.label,
-            price: v.price,
-            weight: v.weight || null,
-            image_url: v.image_url || null,
+            name: v.name?.trim() || v.weight?.trim() || "Standard",
+            label: v.label?.trim() || v.weight?.trim() || v.name?.trim() || "Standard",
+            price: Number(v.price) || 0,
+            weight: v.weight?.trim() || null,
+            image_url: v.image_url?.trim() || null,
             is_in_stock: v.is_in_stock !== false,
             offer: v.offer?.trim() || null,
           };
@@ -267,6 +267,10 @@ function ProductFormModal({
             }
             if (insErr && (insErr.message?.includes("is_in_stock") || insErr.details?.includes("is_in_stock"))) {
               delete varietyPayload.is_in_stock;
+              insErr = (await supabase.from("varieties").insert(varietyPayload)).error;
+            }
+            if (insErr && (insErr.message?.includes("weight") || insErr.details?.includes("weight"))) {
+              delete varietyPayload.weight;
               await supabase.from("varieties").insert(varietyPayload);
             }
           } else {
@@ -281,6 +285,10 @@ function ProductFormModal({
             }
             if (updErr && (updErr.message?.includes("is_in_stock") || updErr.details?.includes("is_in_stock"))) {
               delete varietyPayload.is_in_stock;
+              updErr = (await supabase.from("varieties").update(varietyPayload).eq("id", v.id)).error;
+            }
+            if (updErr && (updErr.message?.includes("weight") || updErr.details?.includes("weight"))) {
+              delete varietyPayload.weight;
               await supabase
                 .from("varieties")
                 .update(varietyPayload)
@@ -330,10 +338,10 @@ function ProductFormModal({
         if (newProduct && varieties.length > 0) {
           const varietyData = varieties.map((v) => ({
             product_id: newProduct.id,
-            name: v.name,
-            label: v.label,
-            price: v.price,
-            weight: v.weight || null,
+            name: v.name?.trim() || v.weight?.trim() || "Standard",
+            label: v.label?.trim() || v.weight?.trim() || v.name?.trim() || "Standard",
+            price: Number(v.price) || 0,
+            weight: v.weight?.trim() || null,
             image_url: v.image_url || null,
             is_in_stock: v.is_in_stock !== false,
             offer: v.offer?.trim() || null,
@@ -345,6 +353,10 @@ function ProductFormModal({
           }
           if (insErr && (insErr.message?.includes("is_in_stock") || insErr.details?.includes("is_in_stock"))) {
             const fallbackData = varietyData.map(({ is_in_stock: _st, offer: _off, ...rest }) => rest);
+            insErr = (await supabase.from("varieties").insert(fallbackData)).error;
+          }
+          if (insErr && (insErr.message?.includes("weight") || insErr.details?.includes("weight"))) {
+            const fallbackData = varietyData.map(({ weight: _wt, is_in_stock: _st, offer: _off, ...rest }) => rest);
             await supabase.from("varieties").insert(fallbackData);
           }
         }
@@ -564,67 +576,41 @@ function ProductFormModal({
             </div>
 
             {showVarieties && (
-              <div className="space-y-3 bg-gray-50 p-3 sm:p-4 rounded-2xl border border-gray-200 mt-2">
+              <div className="space-y-4 bg-gray-50 p-3 sm:p-5 rounded-2xl border-2 border-gray-200 mt-2">
+                <div className="flex items-center justify-between text-xs text-gray-500 font-semibold px-1">
+                  <span>Each variety can have its own Weight, Flavor name, Price, and Stock status.</span>
+                  <span className="text-teal-700 font-bold">{varieties.length} {varieties.length === 1 ? "variety" : "varieties"}</span>
+                </div>
+
                 {varieties.map((v, idx) => {
                   const isDetailsOpen = !!openVarietyDetails[v.id];
                   return (
-                    <div key={v.id} className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs space-y-2.5">
-                      {/* Variety Quick Row: Name, Weight, Price, Stock Switch, Delete */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
-                        <div className="flex-1 min-w-[130px]">
-                          <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Flavor / Size Name
-                          </label>
-                          <input
-                            type="text"
-                            value={v.name}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateVariety(idx, "name", val);
-                              if (!v.label || v.label === v.name) {
-                                updateVariety(idx, "label", val);
-                              }
-                            }}
-                            placeholder="e.g. Orange Bite, Family Pack"
-                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 font-semibold focus:border-[#008080] focus:bg-white outline-none"
-                          />
+                    <div
+                      key={v.id}
+                      className="bg-white p-4 rounded-2xl border-2 border-gray-200 shadow-xs space-y-3 hover:border-teal-300 transition-all"
+                    >
+                      {/* Top Header of Variety: Badge, Title & Actions */}
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-teal-100 text-[#008080] font-black text-xs flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="font-extrabold text-xs text-gray-800 uppercase tracking-wider">
+                            Variety #{idx + 1}
+                          </span>
+                          {v.weight && (
+                            <span className="text-[11px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md">
+                              ⚖️ {v.weight}
+                            </span>
+                          )}
                         </div>
 
-                        <div className="w-full sm:w-28">
-                          <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Weight
-                          </label>
-                          <input
-                            type="text"
-                            value={v.weight || ""}
-                            onChange={(e) => updateVariety(idx, "weight", e.target.value)}
-                            placeholder="e.g. 500g, 1kg"
-                            className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 font-medium focus:border-[#008080] focus:bg-white outline-none"
-                          />
-                        </div>
-
-                        <div className="w-full sm:w-28">
-                          <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Price (₹)
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">₹</span>
-                            <input
-                              type="number"
-                              value={v.price ?? ""}
-                              onChange={(e) => updateVariety(idx, "price", parseFloat(e.target.value) || 0)}
-                              placeholder="0"
-                              className="w-full pl-6 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold text-gray-900 focus:border-[#008080] focus:bg-white outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Stock toggle for this variety */}
-                        <div className="flex items-center justify-between sm:justify-start gap-2 pt-1 sm:pt-4">
+                        <div className="flex items-center gap-2">
+                          {/* Stock toggle */}
                           <button
                             type="button"
                             onClick={() => updateVariety(idx, "is_in_stock", v.is_in_stock === false ? true : false)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 cursor-pointer transition-all ${
                               v.is_in_stock !== false
                                 ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                                 : "bg-red-50 text-red-700 border-red-200"
@@ -638,7 +624,7 @@ function ProductFormModal({
                             ) : (
                               <>
                                 <ToggleLeft className="w-4 h-4 text-red-500" />
-                                <span>Out</span>
+                                <span>Out of Stock</span>
                               </>
                             )}
                           </button>
@@ -654,14 +640,83 @@ function ProductFormModal({
                         </div>
                       </div>
 
-                      {/* Optional details toggle for this flavor */}
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+                      {/* 3 Main Inputs: Weight / Size, Flavor/Name, Price */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        {/* 1. Weight / Size - PROMINENT */}
+                        <div className="bg-teal-50/60 p-3 rounded-xl border border-teal-200">
+                          <label className="block text-xs font-black text-teal-900 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <span>⚖️ Weight / Size</span>
+                              <span className="text-red-500">*</span>
+                            </span>
+                            <span className="text-[10px] text-teal-700 font-bold bg-white px-1.5 py-0.5 rounded border border-teal-200">
+                              e.g. 500g
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            value={v.weight || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateVariety(idx, "weight", val);
+                              if (!v.name) {
+                                updateVariety(idx, "name", val);
+                                updateVariety(idx, "label", val);
+                              }
+                            }}
+                            placeholder="e.g. 500g, 1kg, 250ml, 1L"
+                            className="w-full px-3 py-2 bg-white border-2 border-teal-300 focus:border-[#008080] rounded-xl text-sm text-gray-900 font-bold outline-none shadow-2xs placeholder:text-gray-400"
+                          />
+                        </div>
+
+                        {/* 2. Flavor / Variant Name */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <span>Flavor / Variant Name</span>
+                            <span className="text-[10px] text-gray-400 font-normal">Optional</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={v.name}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateVariety(idx, "name", val);
+                              if (!v.label || v.label === v.name) {
+                                updateVariety(idx, "label", val);
+                              }
+                            }}
+                            placeholder="e.g. Chocolate, Pouch, Bottle"
+                            className="w-full px-3 py-2 bg-white border-2 border-gray-200 focus:border-[#008080] rounded-xl text-sm text-gray-900 font-semibold outline-none shadow-2xs placeholder:text-gray-400"
+                          />
+                        </div>
+
+                        {/* 3. Price (₹) */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <span>Price (₹) <span className="text-red-500">*</span></span>
+                            <span className="text-[10px] text-gray-400 font-normal">Selling Rate</span>
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
+                            <input
+                              type="number"
+                              value={v.price ?? ""}
+                              onChange={(e) => updateVariety(idx, "price", parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="w-full pl-7 pr-3 py-2 bg-white border-2 border-gray-200 focus:border-[#008080] rounded-xl text-sm font-bold text-gray-900 outline-none shadow-2xs placeholder:text-gray-400"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Optional details toggle for this flavor: Custom Photo & Free Gift */}
+                      <div className="pt-1 flex items-center justify-between text-xs">
                         <button
                           type="button"
                           onClick={() => toggleVarietyDetails(v.id)}
                           className="text-gray-500 hover:text-[#008080] font-medium flex items-center gap-1 cursor-pointer"
                         >
-                          <span>{isDetailsOpen ? "▲ Hide extra details" : "▼ + Add custom photo or freebie for this flavor"}</span>
+                          <span>{isDetailsOpen ? "▲ Hide extra details" : "▼ + Add custom photo or freebie for this size"}</span>
                         </button>
                         {v.image_url && (
                           <span className="text-[10px] text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded">
@@ -705,10 +760,10 @@ function ProductFormModal({
                 <button
                   type="button"
                   onClick={addVariety}
-                  className="w-full py-2.5 bg-white hover:bg-teal-50 border-2 border-dashed border-teal-200 hover:border-teal-300 rounded-xl text-[#008080] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-3 bg-white hover:bg-teal-50 border-2 border-dashed border-teal-300 hover:border-teal-400 rounded-2xl text-[#008080] font-black text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>+ Add Another Flavor / Size</span>
+                  <span>+ Add Another Variety / Size</span>
                 </button>
               </div>
             )}
@@ -2951,13 +3006,13 @@ export default function AdminProductsPage() {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5">
+                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                                 <span className="font-bold text-gray-900 text-sm truncate">
                                   {v.label || v.name}
                                 </span>
                                 {v.weight && (
-                                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                    {v.weight}
+                                  <span className="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded">
+                                    ⚖️ {v.weight}
                                   </span>
                                 )}
                               </div>
