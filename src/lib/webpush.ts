@@ -180,15 +180,15 @@ function encryptPayload(subscription: PushSubscriptionData, payloadString: strin
     serverPublicKey,
   ]);
 
-  const prk = crypto.hkdfSync("sha256", sharedSecret, clientAuth, keyInfo, 32);
+  const prk = Buffer.from(crypto.hkdfSync("sha256", sharedSecret, clientAuth, keyInfo, 32));
 
   // 2. CEK
   const cekInfo = Buffer.from("Content-Encoding: aes128gcm\0", "utf8");
-  const cek = crypto.hkdfSync("sha256", prk, salt, cekInfo, 16);
+  const cek = Buffer.from(crypto.hkdfSync("sha256", prk, salt, cekInfo, 16));
 
   // 3. Nonce
   const nonceInfo = Buffer.from("Content-Encoding: nonce\0", "utf8");
-  const nonce = crypto.hkdfSync("sha256", prk, salt, nonceInfo, 12);
+  const nonce = Buffer.from(crypto.hkdfSync("sha256", prk, salt, nonceInfo, 12));
 
   // 4. Record size: 4096 with \2 delimiter
   const recordSize = 4096;

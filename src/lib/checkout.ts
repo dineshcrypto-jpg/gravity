@@ -79,6 +79,9 @@ message += `*Date:* ${new Date().toLocaleDateString("en-IN")}\n\n`;
     if (item.variety.label && item.variety.label.trim() !== "" && !varParts.includes(item.variety.label.trim())) {
       varParts.push(item.variety.label.trim());
     }
+    if (item.variety.weight && item.variety.weight.trim() !== "" && !varParts.includes(item.variety.weight.trim())) {
+      varParts.push(item.variety.weight.trim());
+    }
     const varietyText = varParts.length > 0 ? ` (${varParts.join(" - ")})` : "";
     message += `${index + 1}. ${item.product.name}${varietyText} x ${item.quantity} = Rs. ${(item.variety.price * item.quantity).toLocaleString("en-IN")}\n`;
   });

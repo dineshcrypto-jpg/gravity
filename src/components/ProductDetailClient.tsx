@@ -581,7 +581,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                           ? "bg-gray-100 text-gray-500"
                           : "bg-red-100 text-red-600 font-bold"
                       }`}>
-                        {isVarInStock ? variety.label : "Out of Stock"}
+                        {isVarInStock ? variety.weight || variety.label || "Standard" : "Out of Stock"}
                       </span>
                       {variety.offer && (
                         <span className="text-[10px] font-extrabold text-amber-700 mt-1.5 truncate max-w-full bg-amber-100/70 px-1.5 py-0.5 rounded">
